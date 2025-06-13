@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bars3Icon } from "@heroicons/react/20/solid";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 
 
 
@@ -86,6 +87,10 @@ export const Header = () => {
           <ul className="hidden sm:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">
             <HeaderMenuLinks />
           </ul>
+        </div>
+
+        <div className="flex items-center pr-2">
+          <ConnectButton showBalance={false} />
         </div>
       </div>
     </div>

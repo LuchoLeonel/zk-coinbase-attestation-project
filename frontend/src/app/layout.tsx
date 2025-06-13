@@ -1,9 +1,13 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import dynamic from "next/dynamic";
+
+const WalletProvider = dynamic(() => import("@/components/WalletProvider"), {
+  ssr: false,
+})
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,13 +28,17 @@ export const metadata: Metadata = {
     children: React.ReactNode
   }) {
     return (
-      <html lang="es">
-        <head />
-        <body className={`${inter.className} flex flex-col min-h-screen`}>
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-        </body>
-      </html>
-    );
+    <html lang="es">
+      <head />
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
+        <WalletProvider>
+          <div className="flex flex-col min-h-screen">
+            <Header />
+            <main className="flex-1 flex">{children}</main>
+            <Footer />
+          </div>
+        </WalletProvider>
+      </body>
+    </html>
+  );
   }
