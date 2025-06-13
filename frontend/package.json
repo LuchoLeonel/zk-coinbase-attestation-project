@@ -1,0 +1,47 @@
+{
+  "name": "zk-access-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start -H 0.0.0.0",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@metamask/providers": "^22.1.0",
+    "@noir-lang/noir_js": "^1.0.0-beta.5",
+    "@noir-lang/noir_wasm": "^1.0.0-beta.5",
+    "@radix-ui/react-slot": "^1.2.2",
+    "@types/lodash": "^4.17.16",
+    "@zk-email/sdk": "^0.0.139",
+    "@zkpassport/sdk": "^0.3.4",
+    "axios": "^1.9.0",
+    "buffer": "^6.0.3",
+    "class-variance-authority": "^0.7.1",
+    "ethers": "^6.14.0",
+    "lodash": "^4.17.21",
+    "mailparser": "^3.7.2",
+    "next": "14.1.0",
+    "node-imap": "^0.9.6",
+    "react": "^18",
+    "react-dom": "^18",
+    "react-qr-code": "^2.0.15",
+    "tailwind-merge": "^3.2.0",
+    "uuid": "^11.1.0",
+    "zustand": "^5.0.4"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "eslint": "^8",
+    "eslint-config-next": "14.1.0",
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+}
