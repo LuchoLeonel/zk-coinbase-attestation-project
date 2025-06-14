@@ -19,6 +19,7 @@
     "@types/lodash": "^4.17.16",
     "axios": "^1.9.0",
     "buffer": "^6.0.3",
+    "circomlibjs": "^0.1.7",
     "class-variance-authority": "^0.7.1",
     "ethers": "^6.14.0",
     "lodash": "^4.17.21",
@@ -32,10 +33,11 @@
     "tailwind-merge": "^3.2.0",
     "uuid": "^11.1.0",
     "viem": "2.30.4",
-    "wagmi": "2.6.5",
+    "wagmi": "^2.6.5",
     "zustand": "^5.0.4"
   },
   "devDependencies": {
+    "@types/circomlibjs": "^0.1.6",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
