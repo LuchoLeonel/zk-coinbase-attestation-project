@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
-  Transaction, recoverAddress, getAddress, toBeHex, toBigInt,
-  keccak256, toBeArray, Signature
+  Transaction, recoverAddress, getAddress, toBeHex, toBigInt, Wallet,
+  keccak256, toBeArray, Signature, getBytes, SigningKey, toUtf8Bytes
 } from 'ethers'
 import * as circomlib from 'circomlibjs'
 import { v4 as uuidv4 } from 'uuid'
@@ -35,48 +35,54 @@ export default function ProveAttestationPage() {
         return
       }
 
-      const { to, from, input } = tx;
+      const { from, input } = tx;
 
-      const recovered = recoverSignerFromTx(tx)
-      console.log('✅ Recovered signer:', recovered);
-
-      if (recovered.toLowerCase() !== from.toLowerCase()) {
-        console.error('❌ Firma no válida o no proviene de `from`')
-        return
-      }
+      const { txSignature, txPubKeyX, txPubKeyY, txHashBytes } = parseTxInputs(tx)
+      //console.log('✅ Expected Attester:', recovered);
+      console.log('✅ Transaction Signature:', txSignature);
+      console.log('✅ Transaction Hash:', txHashBytes);
+      console.log('✅ Transaction Signer X:', txPubKeyX);
+      console.log('✅ Transaction Signer Y:', txPubKeyY);
 
       const functionSelector = input.slice(0, 10) // 4 bytes + 0x
       const userAddress = `0x${input.slice(34)}` // los últimos 20 bytes (32 bytes = 64 hex digits, después del selector)
-
       console.log('🧠 Function selector:', functionSelector)
       console.log('🙋‍♂️ User Address (atestado):', userAddress)
 
-      if (!walletClient) throw new Error('No wallet client')
-      const provider = new BrowserProvider(walletClient.transport)
-      const signer = await provider.getSigner()
-      const nonce = uuidv4()
-      const sig = await signer.signMessage(nonce)
+      const { userSignature, userPubKeyX,  userPubKeyY, signedUserHash } = await parseUserChallenge();
       
-      const signature = Signature.from(sig)
+      console.log('✅ User Signature:', userSignature);
+      console.log('✅ User Hash:', signedUserHash);
+      console.log('✅ User Signer X:', userPubKeyX);
+      console.log('✅ User Signer Y:', userPubKeyY);
+      
+      try {
+        const backendRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/zk/generate-proof`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            attester_pub_key_x: txPubKeyX,
+            attester_pub_key_y: txPubKeyY,
+            attester_signature: txSignature,
+            hashed_attestation_tx: txHashBytes,
+            expected_attester: from,
+            user_pub_key_x: userPubKeyX,
+            user_pub_key_y: userPubKeyY,
+            user_signature: userSignature,
+            signed_user_hash: signedUserHash,
+            expected_user_address: userAddress,
+          })
+        });
 
-      console.log('r:', signature.r)
-      console.log('s:', signature.s)
-      console.log('v:', signature.v)
-      /*
-      const inputsForCircuit = {
-        user_address: BigInt(userAddress).toString(),
-        contract_address: BigInt(to).toString(),
-        function_selector: BigInt(functionSelector).toString(),
-        hash: hashString,
-        signature_R8x: signature.R8[0].toString(),
-        signature_R8y: signature.R8[1].toString(),
-        signature_S: signature.S.toString(),
-        signer_x: pubKey[0].toString(),
-        signer_y: pubKey[1].toString()
+        const result = await backendRes.json();
+        console.log('✅ zkProof:', result.proof);
+
+      } catch (error) {
+        console.error(error)
       }
-      console.log("5");
-      console.log('✅ Inputs para el circuito:', inputsForCircuit)
-      */
+
     } catch (err) {
       console.error('❌ Error:', err)
     } finally {
@@ -84,12 +90,45 @@ export default function ProveAttestationPage() {
     }
   }
 
-  function recoverSignerFromTx(tx: any) {
-    console.log('✅ Tx:', tx)
-    console.log('✅ From:', tx.from)
-    console.log('✅ To:', tx.to)
-    console.log('📨 Input (calldata):', tx.input)
-    
+  const parseUserChallenge = async () => {
+    if (!walletClient) throw new Error('No wallet client');
+
+    const provider = new BrowserProvider(walletClient.transport);
+    const signer = await provider.getSigner();
+    const nonce = uuidv4();
+
+    const digest = keccak256(toUtf8Bytes(nonce));
+    const signerAddress = await signer.getAddress();
+    const sig = await walletClient.signMessage({
+      account: signerAddress as `0x${string}`,
+      message: { raw: digest as `0x${string}` }
+    });
+
+    const signature = Signature.from(sig);
+    const rBytes = getBytes(signature.r);
+    const sBytes = getBytes(signature.s);
+    const userSignature = [...rBytes, ...sBytes];
+
+    const prefix = "\x19Ethereum Signed Message:\n32";
+    const digestBytes = getBytes(digest);
+    const prefixedMessage = keccak256(
+      new Uint8Array([
+        ...toUtf8Bytes(prefix),
+        ...digestBytes
+      ])
+    );
+
+    const signedUserHash = Array.from(getBytes(prefixedMessage));
+
+    const pubKeyHex = SigningKey.recoverPublicKey(prefixedMessage, sig);
+    const pubKeyBytes = getBytes(pubKeyHex);
+    const userPubKeyX = Array.from(pubKeyBytes.slice(1, 33));
+    const userPubKeyY = Array.from(pubKeyBytes.slice(33, 65));
+
+    return { userSignature, userPubKeyX, userPubKeyY, signedUserHash };
+  };
+
+  const parseTxInputs = (tx: any) => {
     const unsignedTx = {
       chainId: parseInt(tx.chainId, 16),
       nonce: parseInt(tx.nonce, 16),
@@ -111,8 +150,21 @@ export default function ProveAttestationPage() {
       s: tx.s,
       v: parseInt(tx.v) % 27
     })
+  
+    //const recovered = getAddress(recoverAddress(digest, sig));
 
-    return getAddress(recoverAddress(digest, sig))
+    const rBytes = getBytes(sig.r); 
+    const sBytes = getBytes(sig.s);
+    const txSignature = [...rBytes, ...sBytes];
+
+    const pubKeyHex = SigningKey.recoverPublicKey(digest, sig);
+    const pubKeyBytes = getBytes(pubKeyHex); 
+    const txPubKeyX = Array.from(pubKeyBytes.slice(1, 33));
+    const txPubKeyY = Array.from(pubKeyBytes.slice(33, 65));
+
+    const txHashBytes = Array.from(getBytes(digest));
+
+    return {txSignature, txPubKeyX, txPubKeyY, txHashBytes}
   }
 
 

@@ -24,18 +24,18 @@ export class ZkService {
     const backend = new UltraHonkBackend(circuit.bytecode);
   
     const inputs = {
-      values: s.values.map((v) => BigInt(v).toString()),
-      keys: s.keys.map((v) => BigInt(v).toString()),
-      hashes: s.hashes.map((v) => BigInt(v).toString()),
-      compared_values: s.compared_values.map((v) => BigInt(v).toString()),
-      operations: s.operations.map((v) => BigInt(v).toString()),
-      signature_R8xs: s.signature_R8xs.map((v) => BigInt(v).toString()),
-      signature_R8ys: s.signature_R8ys.map((v) => BigInt(v).toString()),
-      signature_Ss: s.signature_Ss.map((v) => BigInt(v).toString()),
-      signer_x: BigInt(s.signer_x).toString(),
-      signer_y: BigInt(s.signer_y).toString(),
+      attester_pub_key_x: s.attester_pub_key_x.map((v) => BigInt(v).toString()),
+      attester_pub_key_y: s.attester_pub_key_y.map((v) => BigInt(v).toString()),
+      attester_signature: s.attester_signature.map((v) => BigInt(v).toString()),
+      hashed_attestation_tx: s.hashed_attestation_tx.map((v) => BigInt(v).toString()),
+      expected_attester: BigInt(s.expected_attester).toString(),
+      user_pub_key_x: s.user_pub_key_x.map((v) => BigInt(v).toString()),
+      user_pub_key_y: s.user_pub_key_y.map((v) => BigInt(v).toString()),
+      user_signature: s.user_signature.map((v) => BigInt(v).toString()),
+      signed_user_hash: s.signed_user_hash.map((v) => BigInt(v).toString()),
+      expected_user_address: BigInt(s.expected_user_address).toString(),
     };
-  
+    console.log(inputs);
     const { witness } = await noir.execute(inputs);
     const proof = await backend.generateProof(witness, { keccak: true });
     console.log("Proof length (bytes):", proof.proof.length);

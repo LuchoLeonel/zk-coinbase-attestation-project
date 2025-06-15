@@ -1,33 +1,41 @@
-import { IsArray, IsString } from 'class-validator';
+import { IsArray, IsNumber, IsString } from 'class-validator';
 
 export class GenerateProofDto {
   @IsArray()
-  values: string[];
+  @IsNumber({}, { each: true })
+  attester_pub_key_x: number[];
 
   @IsArray()
-  keys: string[];
+  @IsNumber({}, { each: true })
+  attester_pub_key_y: number[];
 
   @IsArray()
-  compared_values: string[];
+  @IsNumber({}, { each: true })
+  attester_signature: number[];
 
   @IsArray()
-  hashes: string[];
-
-  @IsArray()
-  operations: string[];
-
-  @IsArray()
-  signature_R8xs: string[];
-
-  @IsArray()
-  signature_R8ys: string[];
-
-  @IsArray()
-  signature_Ss: string[];
+  @IsNumber({}, { each: true })
+  hashed_attestation_tx: number[];
 
   @IsString()
-  signer_x: string;
+  expected_attester: string;
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  user_pub_key_x: number[];
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  user_pub_key_y: number[];
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  user_signature: number[];
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  signed_user_hash: number[];
 
   @IsString()
-  signer_y: string;
+  expected_user_address: string;
 }

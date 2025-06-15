@@ -11,7 +11,7 @@ fn main(
     user_pub_key_x: [u8; 32],
     user_pub_key_y: [u8; 32],
     user_signature: [u8; 64],
-    signed_user_address_hash: pub [u8; 32],
+    signed_user_hash: pub [u8; 32],
     expected_user_address: pub Field,
 ) {
     // Recover the Ethereum address from the attester's public key and signature over the attestation hash.
@@ -32,7 +32,7 @@ fn main(
         user_pub_key_x,
         user_pub_key_y,
         user_signature,
-        signed_user_address_hash,
+        signed_user_hash,
     );
     // Ensure the recovered user address matches the expected address.
     // This binds the user's signature to their identity in the attestation process.
