@@ -37,6 +37,14 @@ export default function ProveAttestationPage() {
 
       const { from, input } = tx;
 
+      console.log('✅ Calldata:', input);
+      const calldataBytes = Array.from(getBytes(input));
+
+      const functionSelector = input.slice(0, 10) // 4 bytes + 0x
+      const userAddress = `0x${input.slice(34)}` // los últimos 20 bytes (32 bytes = 64 hex digits, después del selector)
+      console.log('🧠 Function selector:', functionSelector)
+      console.log('🙋‍♂️ User Address (atestado):', userAddress)
+
       const { txSignature, txPubKeyX, txPubKeyY, txHashBytes } = parseTxInputs(tx)
       //console.log('✅ Expected Attester:', recovered);
       console.log('✅ Transaction Signature:', txSignature);
@@ -44,13 +52,7 @@ export default function ProveAttestationPage() {
       console.log('✅ Transaction Signer X:', txPubKeyX);
       console.log('✅ Transaction Signer Y:', txPubKeyY);
 
-      const functionSelector = input.slice(0, 10) // 4 bytes + 0x
-      const userAddress = `0x${input.slice(34)}` // los últimos 20 bytes (32 bytes = 64 hex digits, después del selector)
-      console.log('🧠 Function selector:', functionSelector)
-      console.log('🙋‍♂️ User Address (atestado):', userAddress)
-
       const { userSignature, userPubKeyX,  userPubKeyY, signedUserHash } = await parseUserChallenge();
-      
       console.log('✅ User Signature:', userSignature);
       console.log('✅ User Hash:', signedUserHash);
       console.log('✅ User Signer X:', userPubKeyX);
@@ -72,7 +74,7 @@ export default function ProveAttestationPage() {
             user_pub_key_y: userPubKeyY,
             user_signature: userSignature,
             signed_user_hash: signedUserHash,
-            expected_user_address: userAddress,
+            calldata: calldataBytes,
           })
         });
 

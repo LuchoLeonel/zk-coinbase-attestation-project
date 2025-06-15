@@ -33,9 +33,9 @@ export class ZkService {
       user_pub_key_y: s.user_pub_key_y.map((v) => BigInt(v).toString()),
       user_signature: s.user_signature.map((v) => BigInt(v).toString()),
       signed_user_hash: s.signed_user_hash.map((v) => BigInt(v).toString()),
-      expected_user_address: BigInt(s.expected_user_address).toString(),
+      tx_calldata: s.calldata.map((v) => BigInt(v).toString()),
     };
-    console.log(inputs);
+    
     const { witness } = await noir.execute(inputs);
     const proof = await backend.generateProof(witness, { keccak: true });
     console.log("Proof length (bytes):", proof.proof.length);

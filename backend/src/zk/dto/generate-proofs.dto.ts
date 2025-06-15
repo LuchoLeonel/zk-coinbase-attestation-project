@@ -37,5 +37,5 @@ export class GenerateProofDto {
   signed_user_hash: number[];
 
   @IsString()
-  expected_user_address: string;
+  calldata: number[];
 }
