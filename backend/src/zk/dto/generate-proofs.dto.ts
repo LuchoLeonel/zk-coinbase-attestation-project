@@ -34,7 +34,11 @@ export class GenerateProofDto {
 
   @IsArray()
   @IsNumber({}, { each: true })
-  signed_user_hash: number[];
+  nonce_hash: number[];
+
+  @IsArray()
+  @IsNumber({}, { each: true })
+  timestamp_hash: number[];
 
   @IsString()
   calldata: number[];

@@ -29,7 +29,8 @@ export class ZkService {
       user_pub_key_x: s.user_pub_key_x.map((v) => BigInt(v).toString()),
       user_pub_key_y: s.user_pub_key_y.map((v) => BigInt(v).toString()),
       user_signature: s.user_signature.map((v) => BigInt(v).toString()),
-      signed_user_hash: s.signed_user_hash.map((v) => BigInt(v).toString()),
+      nonce_hash: s.nonce_hash.map((v) => BigInt(v).toString()),
+      timestamp_hash: s.timestamp_hash.map((v) => BigInt(v).toString()),
       tx_calldata: s.calldata.map((v) => BigInt(v).toString()),
     };
 

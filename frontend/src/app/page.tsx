@@ -18,17 +18,17 @@ import { useAccount } from 'wagmi'
 const NEXT_PUBLIC_BASE_API_KEY = process.env.NEXT_PUBLIC_BASE_API_KEY;
 
 export default function ProveAttestationPage() {
-    const [status, setStatus] = useState<"idle" | "fetching" | "challenge" | "generating" | "finish">("idle")
-    const [error, setError] = useState<string | null>(null)
-    const [proof, setProof] = useState(null);
-    const { data: walletClient } = useWalletClient()
-    const { address } = useAccount();
-    const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
+  const [status, setStatus] = useState<"idle" | "fetching" | "challenge" | "generating" | "finish">("idle")
+  const [error, setError] = useState<string | null>(null)
+  const [proof, setProof] = useState(null);
+  const { data: walletClient } = useWalletClient()
+  const { address } = useAccount();
+  const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
-    // Define extended attestation type to include blockTransactionHash
-    type ExtendedAttestation = Awaited<ReturnType<typeof getAttestations>>[number] & {
-      txid?: string;
-    };
+  // Define extended attestation type to include blockTransactionHash
+  type ExtendedAttestation = Awaited<ReturnType<typeof getAttestations>>[number] & {
+    txid?: string;
+  };
 
   const fetchTxAndGenerateProof = async () => {
     setStatus("fetching")
@@ -87,11 +87,12 @@ export default function ProveAttestationPage() {
       console.log('✅ Transaction Signer X:', txPubKeyX);
       console.log('✅ Transaction Signer Y:', txPubKeyY);
 
-      const { userSignature, userPubKeyX,  userPubKeyY, signedUserHash } = await parseUserChallenge();
+      const { userSignature, userPubKeyX,  userPubKeyY, nonceHashBytes, timestampHashBytes } = await parseUserChallenge();
       console.log('✅ User Signature:', userSignature);
-      console.log('✅ User Hash:', signedUserHash);
       console.log('✅ User Signer X:', userPubKeyX);
       console.log('✅ User Signer Y:', userPubKeyY);
+      console.log('✅ User Nonce Hash:', nonceHashBytes);
+      console.log('✅ User Timestamp Hash:', timestampHashBytes);
       
       setStatus("generating");
       const backendRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/zk/generate-proof`, {
@@ -108,7 +109,8 @@ export default function ProveAttestationPage() {
           user_pub_key_x: userPubKeyX,
           user_pub_key_y: userPubKeyY,
           user_signature: userSignature,
-          signed_user_hash: signedUserHash,
+          nonce_hash: nonceHashBytes,
+          timestamp_hash: timestampHashBytes,
           calldata: calldataBytes,
         })
       });
@@ -137,7 +139,15 @@ export default function ProveAttestationPage() {
     const signer = await provider.getSigner();
     const nonce = uuidv4();
 
-    const digest = keccak256(toUtf8Bytes(nonce));
+    const nonceHash = keccak256(toUtf8Bytes(nonce));
+    const timestampHash = keccak256(toUtf8Bytes(Date.now().toString()));
+    const nonceHashBytes = Array.from(getBytes(nonceHash)); 
+    const timestampHashBytes = Array.from(getBytes(timestampHash));
+    const digest = keccak256(new Uint8Array([
+        ...getBytes(nonceHash),
+        ...getBytes(timestampHash)
+      ])
+    );
     const signerAddress = await signer.getAddress();
     const sig = await walletClient.signMessage({
       account: signerAddress as `0x${string}`,
@@ -157,7 +167,7 @@ export default function ProveAttestationPage() {
         ...digestBytes
       ])
     );
-
+    console.log("variable a poner en el cir: ", toUtf8Bytes(prefix));
     const signedUserHash = Array.from(getBytes(prefixedMessage));
 
     const pubKeyHex = SigningKey.recoverPublicKey(prefixedMessage, sig);
@@ -165,7 +175,7 @@ export default function ProveAttestationPage() {
     const userPubKeyX = Array.from(pubKeyBytes.slice(1, 33));
     const userPubKeyY = Array.from(pubKeyBytes.slice(33, 65));
 
-    return { userSignature, userPubKeyX, userPubKeyY, signedUserHash };
+    return { userSignature, userPubKeyX, userPubKeyY, nonceHashBytes, timestampHashBytes };
   };
 
   const parseTxInputs = (tx: any) => {
@@ -211,7 +221,7 @@ export default function ProveAttestationPage() {
     return (
         <div className="flex flex-1 flex-col justify-center items-center w-full bg-gradient-to-b from-gray-50 to-gray-100 px-4">
             <div className="max-w-2xl w-full text-center space-y-6">
-            <h1 className="text-3xl font-bold text-gray-900">ZK Coinbase Attestation Project</h1>
+            <h1 className="text-3xl font-bold text-gray-900 pt-10">ZK Coinbase Attestation Project</h1>
 
            <p className="text-gray-600 text-base">
               This process fetches the Base transaction used in your Coinbase attestation and generates a zk proof asserting both your verification status and wallet ownership.
