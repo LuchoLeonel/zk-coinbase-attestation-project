@@ -10,6 +10,8 @@ import * as circomlib from 'circomlibjs'
 import { v4 as uuidv4 } from 'uuid'
 import { useWalletClient } from 'wagmi'
 import { BrowserProvider } from 'ethers'
+import { getAttestations } from '@coinbase/onchainkit/identity';
+import { base } from 'viem/chains'
 
 const NEXT_PUBLIC_BASE_API_KEY = process.env.NEXT_PUBLIC_BASE_API_KEY;
 
@@ -19,6 +21,13 @@ export default function ProveAttestationPage() {
 
   const fetchTxData = async () => {
     setLoading(true)
+
+    const result = await getAttestations(
+      "0xTUADDRESS",
+      base
+    );
+
+    console.log(result);
 
     try {
       const txHash = "0x88d12f3f06f9f82e33c695b26fa9ebdb8b84e322d75fb459e21cd6c4f468e8c3"

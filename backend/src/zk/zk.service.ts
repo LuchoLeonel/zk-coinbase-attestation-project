@@ -8,9 +8,6 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 
-const BLUEPRINT = "LuchoLeonel/ZkAccess@v8";
-
-
 @Injectable()
 export class ZkService {
   private readonly logger = new Logger(ZkService.name);
@@ -35,7 +32,7 @@ export class ZkService {
       signed_user_hash: s.signed_user_hash.map((v) => BigInt(v).toString()),
       tx_calldata: s.calldata.map((v) => BigInt(v).toString()),
     };
-    
+
     const { witness } = await noir.execute(inputs);
     const proof = await backend.generateProof(witness, { keccak: true });
     console.log("Proof length (bytes):", proof.proof.length);
