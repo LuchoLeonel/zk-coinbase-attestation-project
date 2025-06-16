@@ -30,4 +30,4 @@ ENV PORT=5001
 
 EXPOSE 5001
 
-CMD ["node", "dist/src/main.js"]
+CMD ["node", "dist/main.js"]
