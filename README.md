@@ -1,3 +1,42 @@
+<p align="center">
+  <img src="frontend/public/landing.png" alt="ZK Coinbase Attestation Screenshot" style="max-width: 100%; border-radius: 12px;" />
+</p>
+
+<h1 align="center">ZK Coinbase Attestation</h1>
+
+<p align="center">
+  A zero-knowledge proof system to privately prove your Coinbase KYC status using Noir.
+</p>
+
+---
+
+## 🔍 What It Does
+
+ZK Coinbase Attestation allows users to **prove they've completed Coinbase KYC** without revealing their wallet address or onchain history. 
+
+This is useful for:
+- Accessing **compliant DeFi** products.
+- Proving **personhood** privately.
+- Gaining **exclusive perks** while preserving privacy.
+
+---
+
+## 🧪 How It Works
+
+We leverage **onchain attestations** made by Coinbase using the [Ethereum Attestation Service (EAS)](https://base.easscan.org/schema/view/0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9).
+
+Instead of storage proofs, we verify that:
+1. A privileged Coinbase account called `attestAccount(userAddress)`
+2. The transaction was signed correctly by Coinbase
+3. The user owns the wallet that was attested
+
+All this happens in a Noir circuit with sub-4 second proving time.
+
+---
+
+## 🔧 Circuit Logic (Noir)
+
+```rust
 mod utils;
 use utils::{concat_nonce_and_timestamp, concat_prefix_and_digest, extract_address_from_calldata};
 use dep::ecrecover::ecrecover;
@@ -40,7 +79,6 @@ fn main(
     // This prevents malicious signatures from unauthorized attesters.
     assert(attester_addr == expected_attester);
 
-
     // Generate a unique hash from the nonce and timestamp to ensure freshness.
     // This prevents replay attacks by making each signature unique and tied to a specific session.
     // The hash is prefixed following Ethereum's personal_sign format, then hashed again to produce the final signed message.
@@ -71,3 +109,74 @@ fn main(
     // This binds the user's signature to their identity in the attestation process.
     assert(user_addr == extracted_addr);
 }
+```
+
+---
+
+## 🖥️ Web UI Flow
+
+- Connect your wallet
+- Fetch your Coinbase attestation via EAS
+- Locate the attestation transaction
+- Generate a fresh zkProof
+- Use the proof in any integrated dApp
+
+---
+
+## 🧱 Tech Stack
+
+- **Frontend**: Next.js, Wagmi, Tailwind
+- **ZK Circuit**: Noir
+- **Proof Generator**: Node.js + ethers + Noir backend
+- **Onchain Data**: [Base Explorer](https://basescan.org)
+
+---
+
+## 🚀 Getting Started
+
+```bash
+git clone https://github.com/lucholeonel/zk-coinbase-attestation-project
+cd zk-coinbase-attestation-project
+
+# Backend
+cd backend
+yarn install
+yarn dev
+
+# Frontend
+cd frontend
+cp .env.example .env
+yarn install
+yarn dev
+```
+
+
+> ⚠️ You'll need an API key from [BaseScan](https://docs.basescan.org/) to query transaction data.
+> Add it to your `.env` file as:
+> ```bash
+> NEXT_PUBLIC_BASE_API_KEY=your_api_key_here
+> ```
+
+Visit `http://localhost:3000` and click "Fetch Attestation Transaction".
+
+---
+
+## 📁 Folder Structure
+
+- `/frontend`: Web interface for proof generation
+- `/backend`: Noir proof generation + transaction parsing
+- `/backend/circuit`: Noir circuit logic
+
+---
+
+## 📚 Key References
+
+- [Coinbase Verifications GitHub](https://github.com/coinbase/verifications)
+- [EAS Schema](https://base.easscan.org/schema/view/0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9)
+- [Coinbase Verifications Website](https://www.coinbase.com/en-gb/onchain-verify)
+
+---
+
+## 🤝 Credits
+
+Built with ❤️ for the Elite NoirHacker Grant.
