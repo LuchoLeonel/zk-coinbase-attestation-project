@@ -22,7 +22,11 @@ export default function ProveAttestationPage() {
     const { data: walletClient } = useWalletClient()
     const { address } = useAccount();
     const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
-    
+
+    // Define extended attestation type to include blockTransactionHash
+    type ExtendedAttestation = Awaited<ReturnType<typeof getAttestations>>[number] & {
+      blockTransactionHash?: string;
+    };
 
   const fetchTxData = async () => {
     setLoading(true)
@@ -33,12 +37,31 @@ export default function ProveAttestationPage() {
       {
         schemas: [COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID],
       }
-    );
+    ) as ExtendedAttestation[];
 
     console.log(result);
 
     try {
-      const txHash = "0x88d12f3f06f9f82e33c695b26fa9ebdb8b84e322d75fb459e21cd6c4f468e8c3"
+      const attestations = await getAttestations(
+        address as `0x${string}`,
+        base as any,
+        {
+          schemas: [COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID],
+        }
+      ) as ExtendedAttestation[];
+      
+      if (!attestations || attestations.length === 0) {
+        console.warn('⚠️ No attestations found');
+        setLoading(false);
+        return;
+      }
+      
+      const txHash = attestations[0]?.blockTransactionHash;
+      if (!txHash) {
+        console.warn('⚠️ No txHash found in attestation');
+        setLoading(false);
+        return;
+      }
 
       const res = await fetch(
         `https://api-sepolia.basescan.org/api?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${NEXT_PUBLIC_BASE_API_KEY}`
