@@ -33,7 +33,7 @@ export default function ProveAttestationPage() {
     setStatus("fetching")
     setProof(null);
     setError(null);
-
+    console.log("API KEY: ", NEXT_PUBLIC_BASE_API_KEY);
     try {
       const attestations = await getAttestations(
         address as `0x${string}`,
@@ -227,7 +227,7 @@ export default function ProveAttestationPage() {
             </p>
             <Button
                 onClick={fetchTxAndGenerateProof}
-                disabled={(status !== "idle" && status !== "finish")}
+                disabled={(status !== "idle" && status !== "finish") || !address}
                 className="bg-gray-900 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105"
             >
               {status !== 'idle' && status !== 'finish' && (
