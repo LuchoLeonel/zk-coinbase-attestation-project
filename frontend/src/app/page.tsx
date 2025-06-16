@@ -14,7 +14,6 @@ import { getAttestations } from '@coinbase/onchainkit/identity';
 import { base } from 'wagmi/chains';
 import { useAccount } from 'wagmi'
 
-
 const NEXT_PUBLIC_BASE_API_KEY = process.env.NEXT_PUBLIC_BASE_API_KEY;
 
 export default function ProveAttestationPage() {
@@ -71,9 +70,28 @@ export default function ProveAttestationPage() {
 
       setStatus("challenge");
       const { from, input } = tx;
+
+      console.log('✅ Calldata:', input);
       const calldataBytes = Array.from(getBytes(input));
+
+      const functionSelector = input.slice(0, 10) // 4 bytes + 0x
+      const userAddress = `0x${input.slice(34)}` // Last 20 bytes after the function selector
+      console.log('🧠 Function selector:', functionSelector)
+      console.log('🙋‍♂️ User Address (atestado):', userAddress)
+
       const { txSignature, txPubKeyX, txPubKeyY, txHashBytes } = parseTxInputs(tx)
+      //console.log('✅ Expected Attester:', recovered);
+      console.log('✅ Transaction Signature:', txSignature);
+      console.log('✅ Transaction Hash:', txHashBytes);
+      console.log('✅ Transaction Signer X:', txPubKeyX);
+      console.log('✅ Transaction Signer Y:', txPubKeyY);
+
       const { userSignature, userPubKeyX,  userPubKeyY, nonceHashBytes, timestampHashBytes } = await parseUserChallenge();
+      console.log('✅ User Signature:', userSignature);
+      console.log('✅ User Signer X:', userPubKeyX);
+      console.log('✅ User Signer Y:', userPubKeyY);
+      console.log('✅ User Nonce Hash:', nonceHashBytes);
+      console.log('✅ User Timestamp Hash:', timestampHashBytes);
       
       setStatus("generating");
       const backendRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/zk/generate-proof`, {
@@ -97,6 +115,7 @@ export default function ProveAttestationPage() {
       });
 
       const result = await backendRes.json();
+      console.log('✅ zkProof:', result.proof);
       setProof(result.proof);
       setStatus("finish");
 
@@ -198,45 +217,45 @@ export default function ProveAttestationPage() {
   }
 
 
-  return (
-    <div className="flex flex-1 flex-col justify-center items-center w-full bg-gradient-to-b from-gray-50 to-gray-100 px-4">
-        <div className="max-w-2xl w-full text-center space-y-6">
-        <h1 className="text-3xl font-bold text-gray-900 pt-10">ZK Coinbase Attestation Project</h1>
+    return (
+        <div className="flex flex-1 flex-col justify-center items-center w-full bg-gradient-to-b from-gray-50 to-gray-100 px-4">
+            <div className="max-w-2xl w-full text-center space-y-6">
+            <h1 className="text-3xl font-bold text-gray-900 pt-10">ZK Coinbase Attestation Project</h1>
 
-        <p className="text-gray-600 text-base">
-          This process fetches the Base transaction used in your Coinbase attestation and generates a zk proof asserting both your verification status and wallet ownership.
-        </p>
-        <Button
-            onClick={fetchTxAndGenerateProof}
-            disabled={(status !== "idle" && status !== "finish")}
-            className="bg-gray-900 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105"
-        >
-          {status !== 'idle' && status !== 'finish' && (
-            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          )}
-            {{
-              idle: 'Fetch Attestation Transaction',
-              fetching: 'Fetching transaction...',  
-              challenge: 'Verifying account ownership...',
-              generating: 'Generating zk proof...',
-              finish: 'Done! Fetch another account'
-            }[status]}
-        </Button>
+           <p className="text-gray-600 text-base">
+              This process fetches the Base transaction used in your Coinbase attestation and generates a zk proof asserting both your verification status and wallet ownership.
+            </p>
+            <Button
+                onClick={fetchTxAndGenerateProof}
+                disabled={(status !== "idle" && status !== "finish")}
+                className="bg-gray-900 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105"
+            >
+              {status !== 'idle' && status !== 'finish' && (
+                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              )}
+                {{
+                  idle: 'Fetch Attestation Transaction',
+                  fetching: 'Fetching transaction...',  
+                  challenge: 'Verifying account ownership...',
+                  generating: 'Generating zk proof...',
+                  finish: 'Done! Fetch another account'
+                }[status]}
+            </Button>
 
-        <div className="h-5">
-          {error && (
-            <div className="mt-4 text-red-600 text-sm bg-red-100 p-2 rounded-md border border-red-200">
-              {error}
+            <div className="h-5">
+              {error && (
+                <div className="mt-4 text-red-600 text-sm bg-red-100 p-2 rounded-md border border-red-200">
+                  {error}
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {proof && (
-          <div className="bg-gray-100 p-4 rounded overflow-x-auto text-sm text-gray-800 border border-gray-300 break-all">
-            {JSON.stringify(proof)}
+            {proof && (
+              <div className="bg-gray-100 p-4 rounded overflow-x-auto text-sm text-gray-800 border border-gray-300 break-all">
+                {JSON.stringify(proof)}
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
-  )
+        </div>
+    )
 }
