@@ -21,6 +21,9 @@ WORKDIR /app
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/yarn.lock ./
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/tsconfig.json ./
+COPY --from=builder /app/tsconfig.build.json ./
+COPY --from=builder /app/nest-cli.json ./
 COPY --from=builder /app/dist ./dist
 
 ENV PORT=5001
