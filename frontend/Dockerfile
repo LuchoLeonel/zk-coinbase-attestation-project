@@ -14,7 +14,8 @@ COPY . .
 
 ENV NEXT_PUBLIC_BASE_URL="https://coinbase-attestation.zk-access.xyz"
 ENV NEXT_PUBLIC_BACKEND_URL="https://api.coinbase-attestation.zk-access.xyz"
-ENV NEXT_PUBLIC_BASE_SEPOLIA_VERIFIER="0x20c0aa08d78cbcf3634b38ad587a9cc75b250ffc"
+ARG NEXT_PUBLIC_BASE_API_KEY
+ENV NEXT_PUBLIC_BASE_API_KEY=${NEXT_PUBLIC_BASE_API_KEY}
 
 RUN yarn install
 
@@ -46,4 +47,4 @@ COPY --from=builder /app/next.config.js ./next.config.js
 
 EXPOSE 3001
 
-CMD ["yarn", "start"]
+CMD ["yarn", "start", "-p", "3001"]
