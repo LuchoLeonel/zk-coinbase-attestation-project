@@ -11,20 +11,28 @@ import { v4 as uuidv4 } from 'uuid'
 import { useWalletClient } from 'wagmi'
 import { BrowserProvider } from 'ethers'
 import { getAttestations } from '@coinbase/onchainkit/identity';
-import { base } from 'viem/chains'
+import { base } from 'wagmi/chains';
+import { useAccount } from 'wagmi'
+
 
 const NEXT_PUBLIC_BASE_API_KEY = process.env.NEXT_PUBLIC_BASE_API_KEY;
 
 export default function ProveAttestationPage() {
     const [loading, setLoading] = useState(false)
     const { data: walletClient } = useWalletClient()
+    const { address } = useAccount();
+    const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
+    
 
   const fetchTxData = async () => {
     setLoading(true)
 
     const result = await getAttestations(
-      "0xTUADDRESS",
-      base
+      address as `0x${string}`,
+      base as any, 
+      {
+        schemas: [COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID],
+      }
     );
 
     console.log(result);
