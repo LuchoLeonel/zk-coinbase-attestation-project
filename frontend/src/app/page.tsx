@@ -33,7 +33,6 @@ export default function ProveAttestationPage() {
     setStatus("fetching")
     setProof(null);
     setError(null);
-    console.log("API KEY: ", NEXT_PUBLIC_BASE_API_KEY);
     try {
       const attestations = await getAttestations(
         address as `0x${string}`,
