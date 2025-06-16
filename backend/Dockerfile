@@ -1,5 +1,6 @@
 # Etapa 1: Build
 FROM node:22-slim AS builder
+LABEL com.centurylinklabs.watchtower.enable="true"
 
 RUN apt-get update && apt-get install -y git build-essential python3
 

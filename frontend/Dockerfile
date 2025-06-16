@@ -1,5 +1,5 @@
 # Usa la imagen base de Node.js
-FROM node:23.3.0-slim AS builder
+FROM node:22-slim AS builder
 LABEL com.centurylinklabs.watchtower.enable="true"
 
 WORKDIR /app
@@ -11,18 +11,17 @@ RUN corepack enable \
 
 COPY . .
 
+RUN yarn install
 
-ENV NEXT_PUBLIC_BASE_URL="https://coinbase-attestation.zk-access.xyz"
-ENV NEXT_PUBLIC_BACKEND_URL="https://api.coinbase-attestation.zk-access.xyz"
 ARG NEXT_PUBLIC_BASE_API_KEY
 ENV NEXT_PUBLIC_BASE_API_KEY=${NEXT_PUBLIC_BASE_API_KEY}
-
-RUN yarn install
+ENV NEXT_PUBLIC_BASE_URL="https://coinbase-attestation.zk-access.xyz"
+ENV NEXT_PUBLIC_BACKEND_URL="https://api.coinbase-attestation.zk-access.xyz"
 
 RUN yarn build
 
 # Etapa 2: Production
-FROM node:23.3.0-slim
+FROM node:22-slim
 
 # -- Add curl and any other needed utilities
 RUN apt-get update && apt-get install -y curl

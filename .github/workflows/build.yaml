@@ -81,6 +81,6 @@ jobs:
           tags: ${{env.IMAGE_TAG_FRONTEND}}:${{env.IMAGE_VERSION}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-          build-args:
+          build-args: |
             NEXT_PUBLIC_ENVIRONMENT=${{ env.NEXT_PUBLIC_ENVIRONMENT }}
-            NEXT_PUBLIC_BASE_API_KEY= ${{ secrets.NEXT_PUBLIC_BASE_API_KEY }}
+            NEXT_PUBLIC_BASE_API_KEY=${{ secrets.NEXT_PUBLIC_BASE_API_KEY }}
