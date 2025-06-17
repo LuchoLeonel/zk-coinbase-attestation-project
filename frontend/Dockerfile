@@ -23,7 +23,7 @@ FROM node:22-slim
 
 WORKDIR /app
 
-RUN yarn install -g serve
+RUN yarn install
 
 COPY --from=builder /app/dist ./dist
 
