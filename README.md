@@ -140,8 +140,8 @@ cd zk-coinbase-attestation-project
 # Frontend
 cd frontend
 cp .env.example .env
-npm install
-npm run dev
+yarn install
+yarn dev
 ```
 
 

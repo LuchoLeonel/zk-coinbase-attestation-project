@@ -32,4 +32,4 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3001
 
-CMD ["serve", "dist", "-l", "3001"]
+CMD ["yarn", "preview", "--host ", "0.0.0.0", "--port", "3001"]
