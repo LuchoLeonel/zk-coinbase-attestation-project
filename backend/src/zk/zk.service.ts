@@ -34,6 +34,8 @@ export class ZkService {
       tx_calldata: s.calldata.map((v) => BigInt(v).toString()),
     };
 
+    console.log(inputs);
+
     const { witness } = await noir.execute(inputs);
     const proof = await backend.generateProof(witness, { keccak: true });
     console.log("Proof length (bytes):", proof.proof.length);

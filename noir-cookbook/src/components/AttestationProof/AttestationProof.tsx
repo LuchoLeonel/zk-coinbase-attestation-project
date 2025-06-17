@@ -13,6 +13,7 @@ import initACVM from "@noir-lang/acvm_js";
 import acvm from "@noir-lang/acvm_js/web/acvm_js_bg.wasm?url";
 import noirc from "@noir-lang/noirc_abi/web/noirc_abi_wasm_bg.wasm?url";
 import { CompiledCircuit,  Noir  } from '@noir-lang/noir_js'
+import { useAccount } from 'wagmi'
 
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
 
@@ -21,7 +22,7 @@ export default function AttestationProof() {
   const [error, setError] = useState<string | null>(null)
   const [proof, setProof] = useState<ProofData | null>(null);
   const { data: walletClient } = useWalletClient()
-  const address = "0xe1A6db7fF4a99ff36DEFBc6403200C8aF7F291D7"; // address of the Coinbase verified account
+  const { address } = useAccount();
   const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
   useEffect(() => {
@@ -88,26 +89,28 @@ export default function AttestationProof() {
       const { userSignature, userPubKeyX, userPubKeyY, nonceHashBytes, timestampHashBytes } = await parseUserChallenge();
   
       const inputs = {
-        attester_pub_key_x: txPubKeyX,
-        attester_pub_key_y: txPubKeyY,
-        attester_signature: txSignature,
-        hashed_attestation_tx: txHashBytes,
-        expected_attester: from,
-        user_pub_key_x: userPubKeyX,
-        user_pub_key_y: userPubKeyY,
-        user_signature: userSignature,
-        nonce_hash: nonceHashBytes,
-        timestamp_hash: timestampHashBytes,
-        calldata: calldataBytes,
+        attester_pub_key_x: txPubKeyX.map((v) => BigInt(v).toString()),
+        attester_pub_key_y: txPubKeyY.map((v) => BigInt(v).toString()),
+        attester_signature: txSignature.map((v) => BigInt(v).toString()),
+        hashed_attestation_tx: txHashBytes.map((v) => BigInt(v).toString()),
+        expected_attester: BigInt(from).toString(),
+        user_pub_key_x: userPubKeyX.map((v) => BigInt(v).toString()),
+        user_pub_key_y: userPubKeyY.map((v) => BigInt(v).toString()),
+        user_signature: userSignature.map((v) => BigInt(v).toString()),
+        nonce_hash: nonceHashBytes.map((v) => BigInt(v).toString()),
+        timestamp_hash: timestampHashBytes.map((v) => BigInt(v).toString()),
+        tx_calldata: calldataBytes.map((v) => BigInt(v).toString()),
       };
-  
+
+      console.log(inputs);  
+
       setStatus("generating");
   
       const compiledProgram = (await import('../../../public/zk_coinbase_attestation.json')).default as CompiledCircuit;
       const noir = new Noir(compiledProgram);
       const backend = new UltraHonkBackend(compiledProgram.bytecode);
       const { witness } = await noir.execute(inputs);
-      const result = await backend.generateProof(witness);
+      const result = await backend.generateProof(witness, { keccak: true });
       setProof(result);
       setStatus("finish");
   
@@ -118,48 +121,51 @@ export default function AttestationProof() {
     }
   };
 
+
   const parseUserChallenge = async () => {
     if (!walletClient) throw new Error('No wallet client');
+
     const provider = new BrowserProvider(walletClient.transport);
     const signer = await provider.getSigner();
     const nonce = uuidv4();
 
     const nonceHash = keccak256(toUtf8Bytes(nonce));
     const timestampHash = keccak256(toUtf8Bytes(Date.now().toString()));
-
-    const nonceHashBytes = getBytes(nonceHash);
-    const timestampHashBytes = getBytes(timestampHash);
-
+    const nonceHashBytes = Array.from(getBytes(nonceHash)); 
+    const timestampHashBytes = Array.from(getBytes(timestampHash));
     const digest = keccak256(new Uint8Array([
-      ...nonceHashBytes,
-      ...timestampHashBytes
-    ]));
-
-    if (!digest) {
-      throw new Error("Digest is null or undefined");
-    }
-
+        ...getBytes(nonceHash),
+        ...getBytes(timestampHash)
+      ])
+    );
+    const signerAddress = await signer.getAddress();
     const sig = await walletClient.signMessage({
-      account: await signer.getAddress() as `0x${string}`,
-      message: digest
+      account: signerAddress as `0x${string}`,
+      message: { raw: digest as `0x${string}` }
     });
 
     const signature = Signature.from(sig);
-    const userSignature = [...getBytes(signature.r), ...getBytes(signature.s)];
-    const prefixedMessage = keccak256(new Uint8Array([
-      ...toUtf8Bytes("\x19Ethereum Signed Message:\n32"),
-      ...getBytes(digest)
-    ]));
+    const rBytes = getBytes(signature.r);
+    const sBytes = getBytes(signature.s);
+    const userSignature = [...rBytes, ...sBytes];
+
+    const prefix = "\x19Ethereum Signed Message:\n32";
+    const digestBytes = getBytes(digest);
+    const prefixedMessage = keccak256(
+      new Uint8Array([
+        ...toUtf8Bytes(prefix),
+        ...digestBytes
+      ])
+    );
+    console.log("variable a poner en el cir: ", toUtf8Bytes(prefix));
+    const signedUserHash = Array.from(getBytes(prefixedMessage));
 
     const pubKeyHex = SigningKey.recoverPublicKey(prefixedMessage, sig);
     const pubKeyBytes = getBytes(pubKeyHex);
     const userPubKeyX = Array.from(pubKeyBytes.slice(1, 33));
     const userPubKeyY = Array.from(pubKeyBytes.slice(33, 65));
-    return {
-      userSignature, userPubKeyX, userPubKeyY,
-      nonceHashBytes: Array.from(nonceHashBytes),
-      timestampHashBytes: Array.from(timestampHashBytes),
-    };
+
+    return { userSignature, userPubKeyX, userPubKeyY, nonceHashBytes, timestampHashBytes };
   };
 
   const parseTxInputs = (tx: any) => {
