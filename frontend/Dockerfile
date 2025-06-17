@@ -4,6 +4,9 @@ LABEL com.centurylinklabs.watchtower.enable="true"
 
 WORKDIR /app
 
+# Instalar dependencias para compilación de paquetes nativos
+RUN apt-get update && apt-get install -y python3 make g++ && apt-get clean
+
 COPY . .
 
 # Instalar dependencias
