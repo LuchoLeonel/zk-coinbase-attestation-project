@@ -10,11 +10,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aztec/bb.js": "^0.63.1",
+    "@aztec/bb.js": "^0.72.1",
     "@coinbase/onchainkit": "^0.38.14",
     "@monaco-editor/react": "^4.6.0",
-    "@noir-lang/noir_js": "^1.0.0-beta.0",
-    "@noir-lang/noir_wasm": "^1.0.0-beta.0",
+    "@noir-lang/noir_js": "^1.0.0-beta.3",
+    "@noir-lang/noir_wasm": "^1.0.0-beta.3",
     "@rainbow-me/rainbowkit": "^2.2.7",
     "ethers": "^6.14.0",
     "@react-three/drei": "^9.122.0",
