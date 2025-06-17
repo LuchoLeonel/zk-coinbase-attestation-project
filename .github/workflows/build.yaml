@@ -1,6 +1,5 @@
 name: Build & Deploy
 env:
-  IMAGE_TAG_BACKEND: ghcr.io/lucholeonel/zk-coinbase-attestation-project/backend
   IMAGE_TAG_FRONTEND: ghcr.io/lucholeonel/zk-coinbase-attestation-project/frontend
 
   IMAGE_VERSION: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
