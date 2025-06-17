@@ -157,7 +157,6 @@ export default function AttestationProof() {
         ...digestBytes
       ])
     );
-    console.log("variable a poner en el cir: ", toUtf8Bytes(prefix));
     const signedUserHash = Array.from(getBytes(prefixedMessage));
 
     const pubKeyHex = SigningKey.recoverPublicKey(prefixedMessage, sig);
