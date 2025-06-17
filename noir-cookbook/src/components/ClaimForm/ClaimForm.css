@@ -1,0 +1,128 @@
+.claim-form-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 16px;
+  padding: 2rem;
+  margin-top: 2rem;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+
+}
+
+.claim-form-title {
+    font-size: 2.5rem;
+    margin-bottom: 20px;
+    color: #000000;
+    text-align: center;
+}
+
+.claim-form-subtitle {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #000000;
+  text-align: center;
+}
+
+.claim-form-description {
+  font-size: 1rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: #000000;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
+.form-label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  text-align: center;
+
+}
+
+.form-input {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border: 1px solid #c7d2fe;
+  border-radius: 8px;
+  background-color: #eef2ff;
+  transition: border 0.2s ease;
+  color: #000000;
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #6366f1;
+}
+
+.claim-form-button {
+  padding: 0.75rem 1.25rem;
+  font-size: 1rem;
+  background-color: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.claim-form-button:hover {
+  transform: scale(1.05);
+}
+
+.claim-form-status {
+  margin-top: 20px;
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 1rem;
+  text-align: center;
+  max-width: 80%;
+}
+
+.claim-form-status.success {
+  background-color: #28a745;
+  color: #ffffff;
+}
+
+.cclaim-form-stauts.error {
+  background-color: #dc3545;
+  color: #000000;
+}
+
+
+.claim-proof-output h3 {
+  margin-top: 2rem;
+  font-size: 1.2rem;
+  color: #000000;
+}
+
+.claim-proof-output pre {
+  max-height: 300px; /* o lo que prefieras */
+  overflow-y: auto;
+  background-color: #1e1b2f;
+  border-radius: 8px;
+  padding: 1rem;
+  color: #fafafa;
+  font-family: monospace;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.4;
+  text-align: left;
+}

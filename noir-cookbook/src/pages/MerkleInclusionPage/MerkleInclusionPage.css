@@ -1,0 +1,18 @@
+.intro-sequence {
+  margin: 3rem auto;
+  margin-bottom: 0;
+  max-width: 700px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.intro-step {
+  margin-bottom: 2.5rem;
+  opacity: 0;
+}
+
+.intro-step h3,
+.intro-step p {
+  color: #000000;
+}
+
