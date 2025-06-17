@@ -4,7 +4,6 @@ LABEL com.centurylinklabs.watchtower.enable="true"
 
 WORKDIR /app
 
-
 RUN apt-get update \
   && apt-get install -y --no-install-recommends python3 make g++ \
   && apt-get clean && rm -rf /var/lib/apt/lists/* \
@@ -25,6 +24,12 @@ RUN yarn build
 FROM node:22-slim
 
 WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 make g++ \
+  && apt-get clean && rm -rf /var/lib/apt/lists/* \
+  && corepack enable \
+  && corepack prepare yarn@3.2.3 --activate
 
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/yarn.lock ./
