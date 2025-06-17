@@ -26,10 +26,14 @@ FROM node:22-slim
 
 WORKDIR /app
 
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/yarn.lock ./
+
 RUN yarn install
 
 COPY --from=builder /app/dist ./dist
 
+
 EXPOSE 3001
 
-CMD ["yarn", "preview", "--host ", "0.0.0.0", "--port", "3001"]
+CMD ["yarn", "preview", "--host", "0.0.0.0", "--port", "3001"]
