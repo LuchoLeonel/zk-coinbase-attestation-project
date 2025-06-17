@@ -35,7 +35,6 @@
     "react-router-dom": "^7.6.2",
     "react-scan": "^0.0.54",
     "three": "^0.158.0",
-    "viem": "2.30.4",
     "wagmi": "^2.6.5"
   },
   "devDependencies": {
