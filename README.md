@@ -125,9 +125,8 @@ fn main(
 
 ## 🧱 Tech Stack
 
-- **Frontend**: Next.js, Wagmi, Tailwind
+- **Frontend**: Vite, Wagmi, Tailwind
 - **ZK Circuit**: Noir
-- **Proof Generator**: Node.js + ethers + Noir backend
 - **Onchain Data**: [Base Explorer](https://basescan.org)
 
 ---
@@ -138,34 +137,28 @@ fn main(
 git clone https://github.com/lucholeonel/zk-coinbase-attestation-project
 cd zk-coinbase-attestation-project
 
-# Backend
-cd backend
-yarn install
-yarn dev
-
 # Frontend
 cd frontend
 cp .env.example .env
-yarn install
-yarn dev
+npm install
+npm run dev
 ```
 
 
 > ⚠️ You'll need an API key from [BaseScan](https://docs.basescan.org/) to query transaction data.
 > Add it to your `.env` file as:
 > ```bash
-> NEXT_PUBLIC_BASE_API_KEY=your_api_key_here
+> VITE_PUBLIC_BASE_API_KEY=your_api_key_here
 > ```
 
-Visit `http://localhost:3000` and click "Fetch Attestation Transaction".
+Visit `http://localhost:5174` and click "Fetch Attestation Transaction".
 
 ---
 
 ## 📁 Folder Structure
 
 - `/frontend`: Web interface for proof generation
-- `/backend`: Noir proof generation + transaction parsing
-- `/backend/circuit`: Noir circuit logic
+- `/frontend/circuit`: Noir circuit logic
 
 ---
 

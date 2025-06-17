@@ -202,22 +202,24 @@ export default function AttestationProof() {
         <p className="text-gray-600 text-base">
           This process fetches the Base transaction used in your Coinbase attestation and generates a zk proof asserting both your verification status and wallet ownership.
         </p>
-        <button
-          onClick={fetchTxAndGenerateProof}
-          disabled={status !== "idle" && status !== "finish"}
-          className="bg-gray-900 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {status !== 'idle' && status !== 'finish' && (
-            <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-          )}
-          {{
-            idle: 'Fetch Attestation Transaction',
-            fetching: 'Fetching transaction...',
-            challenge: 'Verifying account ownership...',
-            generating: 'Generating zk proof...',
-            finish: 'Done! Fetch another account'
-          }[status]}
-        </button>
+        <div className="flex justify-center items-center">
+          <button
+            onClick={fetchTxAndGenerateProof}
+            disabled={status !== "idle" && status !== "finish"}
+            className="bg-gray-900 hover:bg-gray-800 text-white font-bold py-6 px-8 rounded-lg text-lg transition duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {status !== 'idle' && status !== 'finish' && (
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            )}
+            {{
+              idle: 'Fetch Attestation Transaction',
+              fetching: 'Fetching transaction...',
+              challenge: 'Verifying account ownership...',
+              generating: 'Generating zk proof...',
+              finish: 'Done! Fetch another account'
+            }[status]}
+          </button>
+        </div>
         {error && (
           <div className="mt-4 text-red-600 text-sm bg-red-100 p-2 rounded-md border border-red-200">
             {error}

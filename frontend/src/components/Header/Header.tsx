@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import React, { useState } from "react";
 import { Bars3Icon } from "@heroicons/react/20/solid";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 
-
+import { Link, useLocation } from 'react-router-dom';
 
 type HeaderMenuLink = {
   label: string;
@@ -23,7 +20,8 @@ export const menuLinks: HeaderMenuLink[] = [
 ];
 
 export const HeaderMenuLinks = () => {
-  const pathname = usePathname();
+  const location = useLocation();
+  const pathname = location.pathname;
 
   return (
     <>
@@ -32,8 +30,7 @@ export const HeaderMenuLinks = () => {
         return (
           <li key={href}>
             <Link
-              href={href}
-              passHref
+              to={href}
               className={`${
                 isActive ? "bg-gray-900 shadow-md" : ""
               } bg-gray-900 hover:shadow-md focus:!bg-gray-900 text-white active:!text-neutral py-1.5 px-3 text-sm rounded-full gap-2 grid grid-flow-col`}
@@ -80,7 +77,7 @@ export const Header = () => {
             )}
           </div>
           <div className="flex justify-center items-center w-16 h-16 ml-2">
-            <Link href="/">
+            <Link to="/">
               <img src="/logo-white.png" alt="logo" />
             </Link>
           </div>
