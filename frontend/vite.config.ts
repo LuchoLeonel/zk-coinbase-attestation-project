@@ -23,4 +23,9 @@ export default defineConfig({
     port: 3001,
     allowedHosts: ['coinbase-attestation.zk-access.xyz'],
   },
+  server: {
+    host: '0.0.0.0',
+    port: 3001,
+    allowedHosts: ['coinbase-attestation.zk-access.xyz'],
+  },
 })
