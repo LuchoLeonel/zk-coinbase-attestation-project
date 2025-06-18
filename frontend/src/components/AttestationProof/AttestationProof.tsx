@@ -152,21 +152,21 @@ export default function AttestationProof() {
       setStatus("generating");
       const t0 = performance.now()
       if (!noir || !backend) {
-      console.warn("ZK circuit not ready yet");
-      return;
-    }
+        console.warn("ZK circuit not ready yet");
+        return;
+      }
    
       const { witness } = await noir.execute(inputs);
       const result = await backend.generateProof(witness, { keccak: true });
-  const t1 = performance.now()
-  console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms")
+      const t1 = performance.now()
+      console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms")
       setProof(result);
       setStatus("finish");
   
     } catch (err) {
       console.error('Error in fetchTxAndGenerateProof:', err);
       setStatus("idle");
-      setError(err instanceof Error ? err.message : String(err));
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
     }
   };
 
@@ -178,7 +178,6 @@ export default function AttestationProof() {
     const signer = await provider.getSigner();
     const nonce = uuidv4();
     const timestamp = Date.now().toString();
-
 
     const poseidon = await circomlib.buildPoseidon();
     const {hash, keyHash, valueHash} = await poseidonHash(nonce, timestamp);

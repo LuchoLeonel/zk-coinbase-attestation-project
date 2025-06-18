@@ -1,5 +1,5 @@
 mod utils;
-use utils::{concat_nonce_and_timestamp, concat_prefix_and_digest, extract_address_from_calldata};
+use utils::{concat_prefix_and_digest, extract_address_from_calldata};
 use dep::ecrecover::ecrecover;
 use dep::keccak256::keccak256;
 use std::hash::poseidon;
