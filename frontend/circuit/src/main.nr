@@ -2,6 +2,7 @@ mod utils;
 use utils::{concat_nonce_and_timestamp, concat_prefix_and_digest, extract_address_from_calldata};
 use dep::ecrecover::ecrecover;
 use dep::keccak256::keccak256;
+use std::hash::poseidon;
 
 
 global HARDCODED_SELECTOR: [u8; 4] = [86, 254, 237, 94];
@@ -24,8 +25,8 @@ fn main(
     user_pub_key_x: [u8; 32],
     user_pub_key_y: [u8; 32],
     user_signature: [u8; 64],
-    nonce_hash: pub [u8; 32],
-    timestamp_hash: pub [u8; 32],
+    nonce_hash: pub Field,
+    timestamp_hash: pub Field,
     tx_calldata: [u8; 36],
 ) {
     // Recover the Ethereum address from the attester's public key and signature over the attestation hash.
@@ -44,10 +45,11 @@ fn main(
     // Generate a unique hash from the nonce and timestamp to ensure freshness.
     // This prevents replay attacks by making each signature unique and tied to a specific session.
     // The hash is prefixed following Ethereum's personal_sign format, then hashed again to produce the final signed message.
-    let pre_digest = concat_nonce_and_timestamp(nonce_hash, timestamp_hash);
-    let digest = keccak256(pre_digest, 64);
+    
+    
+    let combined_hash = poseidon::bn254::hash_2([nonce_hash, timestamp_hash]);
 
-    let message = concat_prefix_and_digest(ETH_PREFIX_BYTES, digest);
+    let message = concat_prefix_and_digest(ETH_PREFIX_BYTES, combined_hash.to_be_bytes());
     let signed_user_hash = keccak256(message, 60);
 
     // Recover the user's Ethereum address from their public key and signature over their identity hash.

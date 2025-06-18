@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ProofData, UltraHonkBackend } from "@aztec/bb.js";
 import {
-  Transaction, keccak256, toBeArray, Signature, getBytes, SigningKey, toUtf8Bytes
+  Transaction, keccak256, toBeArray, Signature, getBytes, SigningKey, toUtf8Bytes, toBeHex  , zeroPadValue
 } from 'ethers'
 import { v4 as uuidv4 } from 'uuid'
 import { useWalletClient } from 'wagmi'
@@ -14,6 +14,40 @@ import acvm from "@noir-lang/acvm_js/web/acvm_js_bg.wasm?url";
 import noirc from "@noir-lang/noirc_abi/web/noirc_abi_wasm_bg.wasm?url";
 import { CompiledCircuit,  Noir  } from '@noir-lang/noir_js'
 import { useAccount } from 'wagmi'
+import * as circomlib from 'circomlibjs';
+
+export const poseidonHash = async (key: string, value: any) => {
+    if (!key || value === undefined || value === null) {
+      throw new Error("poseidonHash recibió un key o value vacío");
+    }
+  
+    const poseidon = await circomlib.buildPoseidon();
+  
+    const keyBigInt = BigInt('0x' + Buffer.from(key).toString('hex'));
+  
+    let valueBigInt: bigint;
+    if (typeof value === 'number' || typeof value === 'bigint') {
+        valueBigInt = BigInt(value);
+    } else if (typeof value === 'string') {
+        try {
+            valueBigInt = BigInt(value);
+        } catch {
+            valueBigInt = BigInt('0x' + Buffer.from(value).toString('hex'));
+        }
+    } else {
+        throw new Error('Tipo de value no soportado');
+    }
+  
+    console.log({ key, keyBigInt });
+    console.log({ value, valueBigInt });
+
+    const keyHash = poseidon([keyBigInt]);
+    const valueHash = poseidon([valueBigInt]);
+
+    const hash = poseidon([keyHash, valueHash]);
+    return {hash, keyHash, valueHash};
+};
+
 
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
 
@@ -21,19 +55,30 @@ export default function AttestationProof() {
   const [status, setStatus] = useState<"idle" | "fetching" | "challenge" | "generating" | "finish">("idle")
   const [error, setError] = useState<string | null>(null)
   const [proof, setProof] = useState<ProofData | null>(null);
+  const [noir, setNoir] = useState<Noir | null>(null)
+  const [backend, setBackend] = useState<UltraHonkBackend | null>(null)
   const { data: walletClient } = useWalletClient()
   const { address } = useAccount();
   const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
   useEffect(() => {
-    const init = async () => {
-      await Promise.all([
-        initACVM(fetch(acvm)),
-        initNoirC(fetch(noirc)),
-      ])
-    };
-    init();
-  }, []);
+  const init = async () => {
+    await Promise.all([
+      initACVM(fetch(acvm)),
+      initNoirC(fetch(noirc)),
+    ]);
+
+    const compiledProgram = (await import('../../../public/zk_coinbase_attestation.json')).default as CompiledCircuit;
+    const noirInstance = new Noir(compiledProgram);
+    const backendInstance = new UltraHonkBackend(compiledProgram.bytecode);
+
+    setNoir(noirInstance);
+    setBackend(backendInstance);
+  };
+
+  init();
+}, []);
+
 
   type ExtendedAttestation = Awaited<ReturnType<typeof getAttestations>>[number] & {
     txid?: string;
@@ -86,7 +131,7 @@ export default function AttestationProof() {
       const calldataBytes = Array.from(getBytes(input));
   
       const { txSignature, txPubKeyX, txPubKeyY, txHashBytes } = parseTxInputs(tx);
-      const { userSignature, userPubKeyX, userPubKeyY, nonceHashBytes, timestampHashBytes } = await parseUserChallenge();
+      const { userSignature, userPubKeyX, userPubKeyY, nonceBigInt, timestampBigInt } = await parseUserChallenge();
   
       const inputs = {
         attester_pub_key_x: txPubKeyX.map((v) => BigInt(v).toString()),
@@ -97,20 +142,24 @@ export default function AttestationProof() {
         user_pub_key_x: userPubKeyX.map((v) => BigInt(v).toString()),
         user_pub_key_y: userPubKeyY.map((v) => BigInt(v).toString()),
         user_signature: userSignature.map((v) => BigInt(v).toString()),
-        nonce_hash: nonceHashBytes.map((v) => BigInt(v).toString()),
-        timestamp_hash: timestampHashBytes.map((v) => BigInt(v).toString()),
+        nonce_hash: nonceBigInt.toString(),
+        timestamp_hash: timestampBigInt.toString(),
         tx_calldata: calldataBytes.map((v) => BigInt(v).toString()),
       };
 
       console.log(inputs);  
 
       setStatus("generating");
-  
-      const compiledProgram = (await import('../../../public/zk_coinbase_attestation.json')).default as CompiledCircuit;
-      const noir = new Noir(compiledProgram);
-      const backend = new UltraHonkBackend(compiledProgram.bytecode);
+      const t0 = performance.now()
+      if (!noir || !backend) {
+      console.warn("ZK circuit not ready yet");
+      return;
+    }
+   
       const { witness } = await noir.execute(inputs);
       const result = await backend.generateProof(witness, { keccak: true });
+  const t1 = performance.now()
+  console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms")
       setProof(result);
       setStatus("finish");
   
@@ -128,16 +177,16 @@ export default function AttestationProof() {
     const provider = new BrowserProvider(walletClient.transport);
     const signer = await provider.getSigner();
     const nonce = uuidv4();
+    const timestamp = Date.now().toString();
 
-    const nonceHash = keccak256(toUtf8Bytes(nonce));
-    const timestampHash = keccak256(toUtf8Bytes(Date.now().toString()));
-    const nonceHashBytes = Array.from(getBytes(nonceHash)); 
-    const timestampHashBytes = Array.from(getBytes(timestampHash));
-    const digest = keccak256(new Uint8Array([
-        ...getBytes(nonceHash),
-        ...getBytes(timestampHash)
-      ])
-    );
+
+    const poseidon = await circomlib.buildPoseidon();
+    const {hash, keyHash, valueHash} = await poseidonHash(nonce, timestamp);
+
+    const nonceBigInt = poseidon.F.toObject(keyHash).toString();
+    const timestampBigInt = poseidon.F.toObject(valueHash).toString();
+    const hashBigInt = poseidon.F.toObject(hash);
+    const digest = zeroPadValue(toBeHex(hashBigInt), 32);
     const signerAddress = await signer.getAddress();
     const sig = await walletClient.signMessage({
       account: signerAddress as `0x${string}`,
@@ -164,7 +213,7 @@ export default function AttestationProof() {
     const userPubKeyX = Array.from(pubKeyBytes.slice(1, 33));
     const userPubKeyY = Array.from(pubKeyBytes.slice(33, 65));
 
-    return { userSignature, userPubKeyX, userPubKeyY, nonceHashBytes, timestampHashBytes };
+    return { userSignature, userPubKeyX, userPubKeyY, nonceBigInt, timestampBigInt };
   };
 
   const parseTxInputs = (tx: any) => {
