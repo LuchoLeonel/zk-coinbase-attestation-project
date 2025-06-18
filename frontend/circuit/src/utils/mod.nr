@@ -9,7 +9,6 @@ pub fn concat_prefix_and_digest(prefix: [u8; 28], digest: [u8; 32]) -> [u8; 60] 
     out
 }
 
-
 pub fn extract_address_from_calldata(calldata: [u8; 36]) -> Field {
     let mut addr: Field = 0;
     for i in 0..20 {
