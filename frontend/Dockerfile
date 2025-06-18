@@ -37,6 +37,7 @@ COPY --from=builder /app/yarn.lock ./
 RUN yarn install
 
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/vite.config.ts ./
 
 
 EXPOSE 3001
