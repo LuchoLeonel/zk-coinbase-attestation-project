@@ -4,7 +4,6 @@ use dep::ecrecover::ecrecover;
 use dep::keccak256::keccak256;
 use std::hash::poseidon;
 
-global HARDCODED_SELECTOR: [u8; 4] = [86, 254, 237, 94];
 global ETH_PREFIX_BYTES: [u8; 28] = [
     25, 69, 116, 104, 101, 114, 101, 117, 109, 32, 83, 105, 103, 110, 101, 100, 32, 77, 101, 115,
     115, 97, 103, 101, 58, 10, 51, 50,
@@ -46,9 +45,10 @@ fn main(
     assert(attester_addr == expected_attester);
 
     // Validate selector manually instead of using return-based function
-    for i in 0..4 {
-        assert(tx_calldata[i] == HARDCODED_SELECTOR[i]);
-    }
+    assert(tx_calldata[0] == 0x56);
+    assert(tx_calldata[1] == 0xfe);
+    assert(tx_calldata[2] == 0xed);
+    assert(tx_calldata[3] == 0x5e);
 
     // Safety: The `compute_user_hash` function is unconstrained and does not perform any unsafe memory operations.
     // Secure verification using ECDSA
