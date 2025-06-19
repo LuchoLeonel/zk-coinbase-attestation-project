@@ -105,7 +105,6 @@ export default function AttestationProof() {
         attester_pub_key_y: txPubKeyY.map((v) => BigInt(v).toString()),
         attester_signature: txSignature.map((v) => BigInt(v).toString()),
         hashed_attestation_tx: txHashBytes.map((v) => BigInt(v).toString()),
-        expected_attester: BigInt(from).toString(),
         user_pub_key_x: userPubKeyX.map((v) => BigInt(v).toString()),
         user_pub_key_y: userPubKeyY.map((v) => BigInt(v).toString()),
         user_signature: userSignature.map((v) => BigInt(v).toString()),

@@ -3,6 +3,7 @@ use utils::{concat_prefix_and_digest, extract_address_from_calldata};
 use dep::ecrecover::ecrecover;
 use dep::keccak256::keccak256;
 use std::hash::poseidon;
+use std::ecdsa_secp256k1::verify_signature;
 
 global ETH_PREFIX_BYTES: [u8; 28] = [
     25, 69, 116, 104, 101, 114, 101, 117, 109, 32, 83, 105, 103, 110, 101, 100, 32, 77, 101, 115,
@@ -24,7 +25,6 @@ fn main(
     attester_pub_key_y: [u8; 32],
     attester_signature: [u8; 64],
     hashed_attestation_tx: pub [u8; 32],
-    expected_attester: pub Field,
     user_pub_key_x: [u8; 32],
     user_pub_key_y: [u8; 32],
     user_signature: [u8; 64],
@@ -32,17 +32,15 @@ fn main(
     timestamp_hash: pub Field,
     tx_calldata: [u8; 36],
 ) {
-    // Recover the Ethereum address from the attester's public key and signature over the attestation hash.
+    // Verify the signature from the attester's public key over the attestation hash.
     // This proves that the attestation was genuinely signed by the trusted attester (e.g., Coinbase).
-    let attester_addr = ecrecover(
+    let attesterSignatureIsValid = verify_signature(
         attester_pub_key_x,
         attester_pub_key_y,
         attester_signature,
         hashed_attestation_tx,
     );
-    // Ensure the recovered attester address matches the expected one provided publicly.
-    // This prevents malicious signatures from unauthorized attesters.
-    assert(attester_addr == expected_attester);
+    assert(attesterSignatureIsValid);
 
     // Validate selector manually instead of using return-based function
     assert(tx_calldata[0] == 0x56);
