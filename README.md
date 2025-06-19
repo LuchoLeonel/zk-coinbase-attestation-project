@@ -12,9 +12,10 @@
 
 ## 🔍 What It Does
 
-ZK Coinbase Attestation allows users to **prove they've completed Coinbase KYC** without revealing their wallet address or onchain history. 
+ZK Coinbase Attestation allows users to **prove they've completed Coinbase KYC** without revealing their wallet address or onchain history.
 
 This is useful for:
+
 - Accessing **compliant DeFi** products.
 - Proving **personhood** privately.
 - Gaining **exclusive perks** while preserving privacy.
@@ -26,6 +27,7 @@ This is useful for:
 We leverage **onchain attestations** made by Coinbase using the [Ethereum Attestation Service (EAS)](https://base.easscan.org/schema/view/0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9).
 
 Instead of storage proofs, we verify that:
+
 1. A privileged Coinbase account called `attestAccount(userAddress)`
 2. The transaction was signed correctly by Coinbase
 3. The user owns the wallet that was attested
@@ -38,19 +40,24 @@ All this happens in a Noir circuit with sub-4 second proving time.
 
 ```rust
 mod utils;
-use utils::{concat_nonce_and_timestamp, concat_prefix_and_digest, extract_address_from_calldata};
+use utils::{concat_prefix_and_digest, extract_address_from_calldata};
 use dep::ecrecover::ecrecover;
 use dep::keccak256::keccak256;
-
+use std::hash::poseidon;
 
 global HARDCODED_SELECTOR: [u8; 4] = [86, 254, 237, 94];
 global ETH_PREFIX_BYTES: [u8; 28] = [
-    25, 69, 116, 104, 101, 114, 101, 117,
-    109, 32, 83, 105, 103, 110, 101, 100,
-    32, 77, 101, 115, 115, 97, 103, 101,
-    58, 10, 51, 50
+    25, 69, 116, 104, 101, 114, 101, 117, 109, 32, 83, 105, 103, 110, 101, 100, 32, 77, 101, 115,
+    115, 97, 103, 101, 58, 10, 51, 50,
 ];
 
+// Unconstrained function to compute the hash that the user signs.
+// This combines nonce and timestamp with Poseidon, adds the Ethereum prefix, and hashes with Keccak.
+unconstrained fn compute_user_hash(nonce_hash: Field, timestamp_hash: Field) -> [u8; 32] {
+    let combined_hash = poseidon::bn254::hash_2([nonce_hash, timestamp_hash]);
+    let message = concat_prefix_and_digest(ETH_PREFIX_BYTES, combined_hash.to_be_bytes());
+    keccak256(message, 60)
+}
 
 // This is the main circuit logic for verifying a Coinbase-style ZK attestation.
 // It checks that both the attester (e.g., Coinbase) and the user have signed expected messages using ECDSA.
@@ -63,8 +70,8 @@ fn main(
     user_pub_key_x: [u8; 32],
     user_pub_key_y: [u8; 32],
     user_signature: [u8; 64],
-    nonce_hash: pub [u8; 32],
-    timestamp_hash: pub [u8; 32],
+    nonce_hash: pub Field,
+    timestamp_hash: pub Field,
     tx_calldata: [u8; 36],
 ) {
     // Recover the Ethereum address from the attester's public key and signature over the attestation hash.
@@ -79,14 +86,14 @@ fn main(
     // This prevents malicious signatures from unauthorized attesters.
     assert(attester_addr == expected_attester);
 
-    // Generate a unique hash from the nonce and timestamp to ensure freshness.
-    // This prevents replay attacks by making each signature unique and tied to a specific session.
-    // The hash is prefixed following Ethereum's personal_sign format, then hashed again to produce the final signed message.
-    let pre_digest = concat_nonce_and_timestamp(nonce_hash, timestamp_hash);
-    let digest = keccak256(pre_digest, 64);
+    // Validate selector manually instead of using return-based function
+    for i in 0..4 {
+        assert(tx_calldata[i] == HARDCODED_SELECTOR[i]);
+    }
 
-    let message = concat_prefix_and_digest(ETH_PREFIX_BYTES, digest);
-    let signed_user_hash = keccak256(message, 60);
+    // Safety: The `compute_user_hash` function is unconstrained and does not perform any unsafe memory operations.
+    // Secure verification using ECDSA
+    let signed_user_hash = unsafe { compute_user_hash(nonce_hash, timestamp_hash) };
 
     // Recover the user's Ethereum address from their public key and signature over their identity hash.
     // This shows that the user claims ownership of a particular address (e.g., for KYC or eligibility proofs).
@@ -97,18 +104,14 @@ fn main(
         signed_user_hash,
     );
 
-    // Compare the selector to the expected function selector bytes
-    for i in 0..4 {
-        assert(tx_calldata[i] == HARDCODED_SELECTOR[i]);
-    }
-
-    // Extract the user address from the calldata (last 20 bytes)
+    // Extract address from calldata safely using the utility function
     let extracted_addr = extract_address_from_calldata(tx_calldata);
 
     // Ensure the recovered user address matches the expected address.
     // This binds the user's signature to their identity in the attestation process.
     assert(user_addr == extracted_addr);
 }
+
 ```
 
 ---
@@ -144,9 +147,9 @@ yarn install
 yarn dev
 ```
 
-
 > ⚠️ You'll need an API key from [BaseScan](https://docs.basescan.org/) to query transaction data.
 > Add it to your `.env` file as:
+>
 > ```bash
 > VITE_PUBLIC_BASE_API_KEY=your_api_key_here
 > ```
