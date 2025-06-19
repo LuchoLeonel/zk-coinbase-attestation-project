@@ -15,40 +15,7 @@ import noirc from "@noir-lang/noirc_abi/web/noirc_abi_wasm_bg.wasm?url";
 import { CompiledCircuit,  Noir  } from '@noir-lang/noir_js'
 import { useAccount } from 'wagmi'
 import * as circomlib from 'circomlibjs';
-
-export const poseidonHash = async (key: string, value: any) => {
-    if (!key || value === undefined || value === null) {
-      throw new Error("poseidonHash recibió un key o value vacío");
-    }
-  
-    const poseidon = await circomlib.buildPoseidon();
-  
-    const keyBigInt = BigInt('0x' + Buffer.from(key).toString('hex'));
-  
-    let valueBigInt: bigint;
-    if (typeof value === 'number' || typeof value === 'bigint') {
-        valueBigInt = BigInt(value);
-    } else if (typeof value === 'string') {
-        try {
-            valueBigInt = BigInt(value);
-        } catch {
-            valueBigInt = BigInt('0x' + Buffer.from(value).toString('hex'));
-        }
-    } else {
-        throw new Error('Tipo de value no soportado');
-    }
-  
-    console.log({ key, keyBigInt });
-    console.log({ value, valueBigInt });
-
-    const keyHash = poseidon([keyBigInt]);
-    const valueHash = poseidon([valueBigInt]);
-
-    const hash = poseidon([keyHash, valueHash]);
-    return {hash, keyHash, valueHash};
-};
-
-
+import { poseidonHash } from '../../utils/utils';
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
 
 export default function AttestationProof() {
@@ -62,22 +29,22 @@ export default function AttestationProof() {
   const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
   useEffect(() => {
-  const init = async () => {
-    await Promise.all([
-      initACVM(fetch(acvm)),
-      initNoirC(fetch(noirc)),
-    ]);
+    const init = async () => {
+      await Promise.all([
+        initACVM(fetch(acvm)),
+        initNoirC(fetch(noirc)),
+      ]);
 
-    const compiledProgram = (await import('../../../public/zk_coinbase_attestation.json')).default as CompiledCircuit;
-    const noirInstance = new Noir(compiledProgram);
-    const backendInstance = new UltraHonkBackend(compiledProgram.bytecode);
+      const compiledProgram = (await import('../../../public/zk_coinbase_attestation.json')).default as CompiledCircuit;
+      const noirInstance = new Noir(compiledProgram);
+      const backendInstance = new UltraHonkBackend(compiledProgram.bytecode, { threads: 4 });
 
-    setNoir(noirInstance);
-    setBackend(backendInstance);
-  };
+      setNoir(noirInstance);
+      setBackend(backendInstance);
+    };
 
-  init();
-}, []);
+    init();
+  }, []);
 
 
   type ExtendedAttestation = Awaited<ReturnType<typeof getAttestations>>[number] & {
@@ -180,10 +147,10 @@ export default function AttestationProof() {
     const timestamp = Date.now().toString();
 
     const poseidon = await circomlib.buildPoseidon();
-    const {hash, keyHash, valueHash} = await poseidonHash(nonce, timestamp);
+    const {hash, value1Hash, value2Hash} = await poseidonHash(nonce, timestamp);
 
-    const nonceBigInt = poseidon.F.toObject(keyHash).toString();
-    const timestampBigInt = poseidon.F.toObject(valueHash).toString();
+    const nonceBigInt = poseidon.F.toObject(value1Hash).toString();
+    const timestampBigInt = poseidon.F.toObject(value2Hash).toString();
     const hashBigInt = poseidon.F.toObject(hash);
     const digest = zeroPadValue(toBeHex(hashBigInt), 32);
     const signerAddress = await signer.getAddress();
