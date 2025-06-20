@@ -128,11 +128,30 @@ export default function AttestationProof() {
       console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms")
       setProof(result);
       setStatus("finish");
+
+      window.dispatchEvent( new CustomEvent('zk-coinbase-proof', {
+        detail: {
+          proof: result,
+          publicInputs: inputs,
+          status: "success",
+          meta: {
+            nonce: nonceBigInt.toString(),
+            timestamp: timestampBigInt.toString(),
+          }
+        }
+      }))
   
     } catch (err) {
       console.error('Error in fetchTxAndGenerateProof:', err);
       setStatus("idle");
       setError(err instanceof Error ? err.message : JSON.stringify(err));
+    
+      window.dispatchEvent( new CustomEvent('zk-coinbase-proof', {
+        detail: {
+          status: "error",
+          error: err instanceof Error ? err.message : JSON.stringify(err),
+        }
+      }))
     }
   };
 
