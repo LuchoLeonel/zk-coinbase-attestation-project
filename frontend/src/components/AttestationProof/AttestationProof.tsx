@@ -14,9 +14,7 @@ import { CompiledCircuit,  Noir  } from '@noir-lang/noir_js'
 import { useAccount } from 'wagmi'
 import * as circomlib from 'circomlibjs';
 import { poseidonHash } from '../../utils/utils';
-import { request, gql } from 'graphql-request';
 
-const EAS_SUBGRAPH_BASE = 'https://base.easscan.org/graphql'; // Subgrafo de EAS en Base
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
 
 export default function AttestationProof() {
@@ -27,7 +25,6 @@ export default function AttestationProof() {
   const [backend, setBackend] = useState<UltraHonkBackend | null>(null)
   const { data: walletClient } = useWalletClient()
   const { address } = useAccount();
-  const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
   useEffect(() => {
     const init = async () => {
@@ -47,7 +44,42 @@ export default function AttestationProof() {
     init();
   }, []);
 
-  const now = Math.floor(Date.now() / 1000);
+  async function fetchKycAttestation(address: string): Promise<any> {
+    const now = Math.floor(Date.now() / 1000);
+    const query = `query GetAttestations($recipient: String!, $attester: String!, $schemaId: String!, $now: Int!) {
+      attestations(
+        where: {
+          recipient: { equals: $recipient }
+          schemaId: { equals: $schemaId }
+          attester: { equals: $attester }
+          revocationTime: { equals: 0 }
+          OR: [
+            { expirationTime: { equals: 0 } }
+            { expirationTime: { gt: $now } }
+          ]
+        }
+        orderBy: { time: desc }
+        take: 1
+      ) {
+        txid
+      }
+    }`;
+    const res = await fetch("https://base.easscan.org/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        variables: {
+          recipient: address,
+          attester: "0x357458739F90461b99789350868CD7CF330Dd7EE",
+          schemaId: "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9",
+          now,
+        },
+      }),
+    });
+    const json = await res.json();
+    return json.data?.attestations?.[0] || null;
+  }  
 
   const fetchTxAndGenerateProof = async () => {
     setStatus("fetching");
@@ -55,43 +87,9 @@ export default function AttestationProof() {
     setError(null);
   
     try {
-      // Make the query to the EAS subgraph to get the latest attestation for the Coinbase verified account schema
-      const query = gql`
-      query GetValidAttestation($recipient: String!, $schemaId: String!, $now: Int!) {
-        attestations(
-          where: {
-            recipient: { equals: $recipient }
-            schemaId: { equals: $schemaId }
-            revocationTime: { equals: 0 }
-            OR: [
-              { expirationTime: { equals: 0 } }
-              { expirationTime: { gt: $now } }
-            ]
-          }
-          orderBy: { time: desc }
-          take: 1
-        ) {
-          id
-          txid
-        }
-      }
-    `;
-  
-    const variables = {
-      recipient: address?.toLowerCase(),
-      schemaId: COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID.toLowerCase(),
-      now
-    };
 
-    type AttestationResponse = {
-      attestations: {
-        id: string;
-        txid: string;
-      }[];
-    };
-    
-    const data: AttestationResponse = await request(EAS_SUBGRAPH_BASE, query, variables);
-    const txHash = data?.attestations?.[0]?.txid;
+      const txData = await fetchKycAttestation(address!);
+      const txHash = txData?.txid;
   
       console.log("Attestation txHash:", txHash);
   
