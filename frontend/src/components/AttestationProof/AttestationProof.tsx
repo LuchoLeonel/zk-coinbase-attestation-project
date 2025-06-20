@@ -6,8 +6,6 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 import { useWalletClient } from 'wagmi'
 import { BrowserProvider } from 'ethers'
-import { getAttestations } from '@coinbase/onchainkit/identity';
-import { base } from 'wagmi/chains';
 import initNoirC from "@noir-lang/noirc_abi";
 import initACVM from "@noir-lang/acvm_js";
 import acvm from "@noir-lang/acvm_js/web/acvm_js_bg.wasm?url";
@@ -196,7 +194,7 @@ export default function AttestationProof() {
         ...digestBytes
       ])
     );
-    
+
     const pubKeyHex = SigningKey.recoverPublicKey(prefixedMessage, sig);
     const pubKeyBytes = getBytes(pubKeyHex);
     const userPubKeyX = Array.from(pubKeyBytes.slice(1, 33));
