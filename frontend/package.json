@@ -12,7 +12,6 @@
   "dependencies": {
     "@aztec/aztec.js": "^0.85.0",
     "@aztec/bb.js": "0.72.1",
-    "@coinbase/onchainkit": "^0.38.14",
     "@heroicons/react": "^2.2.0",
     "@monaco-editor/react": "^4.6.0",
     "@noir-lang/noir_js": "1.0.0-beta.2",
