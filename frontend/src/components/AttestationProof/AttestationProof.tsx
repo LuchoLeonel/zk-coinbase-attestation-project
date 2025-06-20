@@ -16,6 +16,9 @@ import { CompiledCircuit,  Noir  } from '@noir-lang/noir_js'
 import { useAccount } from 'wagmi'
 import * as circomlib from 'circomlibjs';
 import { poseidonHash } from '../../utils/utils';
+import { request, gql } from 'graphql-request';
+
+const EAS_SUBGRAPH_BASE = 'https://base.easscan.org/graphql'; // Subgrafo de EAS en Base
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
 
 export default function AttestationProof() {
@@ -46,10 +49,7 @@ export default function AttestationProof() {
     init();
   }, []);
 
-
-  type ExtendedAttestation = Awaited<ReturnType<typeof getAttestations>>[number] & {
-    txid?: string;
-  };
+  const now = Math.floor(Date.now() / 1000);
 
   const fetchTxAndGenerateProof = async () => {
     setStatus("fetching");
@@ -57,35 +57,58 @@ export default function AttestationProof() {
     setError(null);
   
     try {
-      const attestations = await getAttestations(
-        address as `0x${string}`,
-        base as any,
-        { schemas: [COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID] }
-      ) as ExtendedAttestation[];
-  
-      console.log('Attestations:', attestations);
-  
-      if (!attestations || attestations.length === 0) {
-        setError("No attestations found");
-        setStatus("idle");
-        return;
+      // Make the query to the EAS subgraph to get the latest attestation for the Coinbase verified account schema
+      const query = gql`
+      query GetValidAttestation($recipient: String!, $schemaId: String!, $now: Int!) {
+        attestations(
+          where: {
+            recipient: { equals: $recipient }
+            schemaId: { equals: $schemaId }
+            revocationTime: { equals: 0 }
+            OR: [
+              { expirationTime: { equals: 0 } }
+              { expirationTime: { gt: $now } }
+            ]
+          }
+          orderBy: { time: desc }
+          take: 1
+        ) {
+          id
+          txid
+        }
       }
+    `;
   
-      const txHash = attestations[0]?.txid;
-      console.log('txHash:', txHash);
+    const variables = {
+      recipient: address?.toLowerCase(),
+      schemaId: COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID.toLowerCase(),
+      now
+    };
+
+    type AttestationResponse = {
+      attestations: {
+        id: string;
+        txid: string;
+      }[];
+    };
+    
+    const data: AttestationResponse = await request(EAS_SUBGRAPH_BASE, query, variables);
+    const txHash = data?.attestations?.[0]?.txid;
+  
+      console.log("Attestation txHash:", txHash);
   
       if (!txHash || typeof txHash !== 'string' || !txHash.startsWith('0x')) {
-        setError('Invalid or missing txHash in attestation');
+        setError('Invalid or missing txHash from EAS subgraph');
         setStatus("idle");
         return;
       }
   
+      // Get tx details from Basescan API
       const res = await fetch(
         `https://api.basescan.org/api?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${VITE_PUBLIC_BASE_API_KEY}`
       );
-      const data = await res.json();
-      const tx = data?.result;
-      console.log('Transaction:', tx);
+      const json = await res.json();
+      const tx = json?.result;
   
       if (!tx || !tx.input || !tx.r || !tx.s || !tx.v || !tx.from) {
         setError('Invalid or missing transaction data from Basescan API');
@@ -93,9 +116,9 @@ export default function AttestationProof() {
         return;
       }
   
+      // Parse transaction inputs
       setStatus("challenge");
-      const { from, input } = tx;
-      const calldataBytes = Array.from(getBytes(input));
+      const calldataBytes = Array.from(getBytes(tx.input));
   
       const { txSignature, txPubKeyX, txPubKeyY, txHashBytes } = parseTxInputs(tx);
       const { userSignature, userPubKeyX, userPubKeyY, nonceBigInt, timestampBigInt } = await parseUserChallenge();
@@ -112,30 +135,32 @@ export default function AttestationProof() {
         timestamp_hash: timestampBigInt.toString(),
         tx_calldata: calldataBytes.map((v) => BigInt(v).toString()),
       };
-
-      console.log(inputs);  
-
+  
+      console.log("Inputs to ZK circuit:", inputs);
+  
+      // Execute the Noir circuit and generate the proof
       setStatus("generating");
-      const t0 = performance.now()
+      const t0 = performance.now();
+  
       if (!noir || !backend) {
         console.warn("ZK circuit not ready yet");
         return;
       }
-   
+  
       const { witness } = await noir.execute(inputs);
       const result = await backend.generateProof(witness, { keccak: true });
-      const t1 = performance.now()
-      console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms")
+  
+      const t1 = performance.now();
+      console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms");
+  
       setProof(result);
       setStatus("finish");
-  
     } catch (err) {
       console.error('Error in fetchTxAndGenerateProof:', err);
       setStatus("idle");
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     }
   };
-
 
   const parseUserChallenge = async () => {
     if (!walletClient) throw new Error('No wallet client');
@@ -171,8 +196,7 @@ export default function AttestationProof() {
         ...digestBytes
       ])
     );
-    const signedUserHash = Array.from(getBytes(prefixedMessage));
-
+    
     const pubKeyHex = SigningKey.recoverPublicKey(prefixedMessage, sig);
     const pubKeyBytes = getBytes(pubKeyHex);
     const userPubKeyX = Array.from(pubKeyBytes.slice(1, 33));
