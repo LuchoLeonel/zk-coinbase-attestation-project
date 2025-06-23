@@ -16,6 +16,7 @@ import { CompiledCircuit,  Noir  } from '@noir-lang/noir_js'
 import { useAccount } from 'wagmi'
 import * as circomlib from 'circomlibjs';
 import { poseidonHash } from '../../utils/utils';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
 
 export default function AttestationProof() {
@@ -25,7 +26,7 @@ export default function AttestationProof() {
   const [noir, setNoir] = useState<Noir | null>(null)
   const [backend, setBackend] = useState<UltraHonkBackend | null>(null)
   const { data: walletClient } = useWalletClient()
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
   useEffect(() => {
@@ -129,29 +130,40 @@ export default function AttestationProof() {
       setProof(result);
       setStatus("finish");
 
-      window.dispatchEvent( new CustomEvent('zk-coinbase-proof', {
-        detail: {
-          proof: result,
-          publicInputs: inputs,
-          status: "success",
-          meta: {
-            nonce: nonceBigInt.toString(),
-            timestamp: timestampBigInt.toString(),
-          }
-        }
-      }))
+      console.log("=== Dispatching Success Event ===");
+      const successData = {
+        proof: result,
+        publicInputs: inputs,
+        meta: {
+          nonce: nonceBigInt.toString(),
+          timestamp: timestampBigInt.toString(),
+        },
+        type: "zk-coinbase-proof"
+      };
+      console.log("Sending success data:", successData);
+      console.log("Window origin:", window.location.origin);
+
+      window.postMessage(successData, "*");
+      
+      console.log("Success event dispatched");
   
     } catch (err) {
       console.error('Error in fetchTxAndGenerateProof:', err);
       setStatus("idle");
       setError(err instanceof Error ? err.message : JSON.stringify(err));
     
-      window.dispatchEvent( new CustomEvent('zk-coinbase-proof', {
-        detail: {
-          status: "error",
-          error: err instanceof Error ? err.message : JSON.stringify(err),
-        }
-      }))
+      console.log("=== Dispatching Error Event ===");
+      const errorData = {
+        status: "error",
+        error: err instanceof Error ? err.message : JSON.stringify(err),
+        type: "zk-coinbase-proof"
+      };
+      console.log("Sending error data:", errorData);
+      console.log("Window origin:", window.location.origin);
+
+      window.postMessage(errorData, "*");
+      
+      console.log("Error event dispatched");
     }
   };
 
@@ -236,6 +248,7 @@ export default function AttestationProof() {
           This process fetches the Base transaction used in your Coinbase attestation and generates a zk proof asserting both your verification status and wallet ownership.
         </p>
         <div className="flex justify-center items-center">
+          {isConnected ? (
           <button
             onClick={fetchTxAndGenerateProof}
             disabled={(status !== "idle" && status !== "finish") || !address}
@@ -252,6 +265,9 @@ export default function AttestationProof() {
               finish: 'Done! Fetch another account'
             }[status]}
           </button>
+          ) : (
+            <ConnectButton />
+          )}
         </div>
         {error && (
           <div className="mt-4 text-red-600 text-sm bg-red-100 p-2 rounded-md border border-red-200">
