@@ -28,7 +28,7 @@ export function openZkKycPopup(config: ProofConfig = {}): Promise<{
   return new Promise((resolve, reject) => {
     console.log("url", url);
     const popup = window.open(
-      url, 
+      url + "?origin=" + encodeURIComponent(window.location.origin), 
       "_blank", 
       `width=${popupWidth},height=${popupHeight}`
     )
@@ -49,29 +49,9 @@ export function openZkKycPopup(config: ProofConfig = {}): Promise<{
         return;
       }
       
-      console.log("Origin allowed, processing data...");
       const { proof, publicInputs, meta, type, status, error } = event.data || {};
-      
-      console.log("Extracted data:", { proof, publicInputs, meta, type, status, error });
-      
-      // Handle error case
-      if (status === "error" || error) {
-        console.log("Error received:", error);
-        window.removeEventListener("message", handler);
-        reject(new Error(error || "Unknown error"));
-        return;
-      }
-      
-      // Check for required fields
-      if (!proof || !publicInputs || !meta || !type) {
-        console.log("Missing required fields:", { 
-          hasProof: !!proof, 
-          hasPublicInputs: !!publicInputs, 
-          hasMeta: !!meta, 
-          hasType: !!type 
-        });
-        return;
-      }
+
+      console.log("event.data", event.data);
       
       console.log("type:", type);
       if (type !== "zk-coinbase-proof") {

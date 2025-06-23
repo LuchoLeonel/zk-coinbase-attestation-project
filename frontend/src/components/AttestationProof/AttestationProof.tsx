@@ -130,10 +130,13 @@ export default function AttestationProof() {
       setProof(result);
       setStatus("finish");
 
+      console.log("parent", parent)
+      console.log("result", parent.window.opener);
+
       console.log("=== Dispatching Success Event ===");
       const successData = {
-        proof: result,
-        publicInputs: inputs,
+        proof: result.proof,
+        publicInputs: result.publicInputs,
         meta: {
           nonce: nonceBigInt.toString(),
           timestamp: timestampBigInt.toString(),
@@ -143,8 +146,8 @@ export default function AttestationProof() {
       console.log("Sending success data:", successData);
       console.log("Window origin:", window.location.origin);
 
-      window.postMessage(successData, "*");
-      
+      window.opener?.postMessage(successData, "*");
+
       console.log("Success event dispatched");
   
     } catch (err) {
@@ -246,6 +249,9 @@ export default function AttestationProof() {
         <h1 className="text-3xl font-bold text-gray-900 pt-10">ZK Coinbase Attestation Project</h1>
         <p className="text-gray-600 text-base">
           This process fetches the Base transaction used in your Coinbase attestation and generates a zk proof asserting both your verification status and wallet ownership.
+        </p>
+        <p className="text-gray-600 text-base">
+          {window.opener ? "true" : "false"}
         </p>
         <div className="flex justify-center items-center">
           {isConnected ? (
