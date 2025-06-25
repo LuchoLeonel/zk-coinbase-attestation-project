@@ -6,8 +6,6 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 import { useWalletClient } from 'wagmi'
 import { BrowserProvider } from 'ethers'
-import { getAttestations } from '@coinbase/onchainkit/identity';
-import { base } from 'wagmi/chains';
 import initNoirC from "@noir-lang/noirc_abi";
 import initACVM from "@noir-lang/acvm_js";
 import acvm from "@noir-lang/acvm_js/web/acvm_js_bg.wasm?url";
@@ -17,6 +15,7 @@ import { useAccount } from 'wagmi'
 import * as circomlib from 'circomlibjs';
 import { poseidonHash } from '../../utils/utils';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
 
 export default function AttestationProof() {
@@ -27,7 +26,6 @@ export default function AttestationProof() {
   const [backend, setBackend] = useState<UltraHonkBackend | null>(null)
   const { data: walletClient } = useWalletClient()
   const { address, isConnected } = useAccount();
-  const COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID = '0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9';
 
   useEffect(() => {
     const init = async () => {
@@ -47,10 +45,42 @@ export default function AttestationProof() {
     init();
   }, []);
 
-
-  type ExtendedAttestation = Awaited<ReturnType<typeof getAttestations>>[number] & {
-    txid?: string;
-  };
+  async function fetchKycAttestation(address: string): Promise<any> {
+    const now = Math.floor(Date.now() / 1000);
+    const query = `query GetAttestations($recipient: String!, $attester: String!, $schemaId: String!, $now: Int!) {
+      attestations(
+        where: {
+          recipient: { equals: $recipient }
+          schemaId: { equals: $schemaId }
+          attester: { equals: $attester }
+          revocationTime: { equals: 0 }
+          OR: [
+            { expirationTime: { equals: 0 } }
+            { expirationTime: { gt: $now } }
+          ]
+        }
+        orderBy: { time: desc }
+        take: 1
+      ) {
+        txid
+      }
+    }`;
+    const res = await fetch("https://base.easscan.org/graphql", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        query,
+        variables: {
+          recipient: address,
+          attester: "0x357458739F90461b99789350868CD7CF330Dd7EE",
+          schemaId: "0xf8b05c79f090979bf4a80270aba232dff11a10d9ca55c4f88de95317970f0de9",
+          now,
+        },
+      }),
+    });
+    const json = await res.json();
+    return json.data?.attestations?.[0] || null;
+  }  
 
   const fetchTxAndGenerateProof = async () => {
     setStatus("fetching");
@@ -58,35 +88,24 @@ export default function AttestationProof() {
     setError(null);
   
     try {
-      const attestations = await getAttestations(
-        address as `0x${string}`,
-        base as any,
-        { schemas: [COINBASE_VERIFIED_ACCOUNT_SCHEMA_ID] }
-      ) as ExtendedAttestation[];
+
+      const txData = await fetchKycAttestation(address!);
+      const txHash = txData?.txid;
   
-      console.log('Attestations:', attestations);
-  
-      if (!attestations || attestations.length === 0) {
-        setError("No attestations found");
-        setStatus("idle");
-        return;
-      }
-  
-      const txHash = attestations[0]?.txid;
-      console.log('txHash:', txHash);
+      console.log("Attestation txHash:", txHash);
   
       if (!txHash || typeof txHash !== 'string' || !txHash.startsWith('0x')) {
-        setError('Invalid or missing txHash in attestation');
+        setError('Invalid or missing txHash from EAS subgraph');
         setStatus("idle");
         return;
       }
   
+      // Get tx details from Basescan API
       const res = await fetch(
         `https://api.basescan.org/api?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${VITE_PUBLIC_BASE_API_KEY}`
       );
-      const data = await res.json();
-      const tx = data?.result;
-      console.log('Transaction:', tx);
+      const json = await res.json();
+      const tx = json?.result;
   
       if (!tx || !tx.input || !tx.r || !tx.s || !tx.v || !tx.from) {
         setError('Invalid or missing transaction data from Basescan API');
@@ -94,9 +113,9 @@ export default function AttestationProof() {
         return;
       }
   
+      // Parse transaction inputs
       setStatus("challenge");
-      const { from, input } = tx;
-      const calldataBytes = Array.from(getBytes(input));
+      const calldataBytes = Array.from(getBytes(tx.input));
   
       const { txSignature, txPubKeyX, txPubKeyY, txHashBytes } = parseTxInputs(tx);
       const { userSignature, userPubKeyX, userPubKeyY, nonceBigInt, timestampBigInt } = await parseUserChallenge();
@@ -113,27 +132,28 @@ export default function AttestationProof() {
         timestamp_hash: timestampBigInt.toString(),
         tx_calldata: calldataBytes.map((v) => BigInt(v).toString()),
       };
-
-      console.log(inputs);  
-
+  
+      console.log("Inputs to ZK circuit:", inputs);
+  
+      // Execute the Noir circuit and generate the proof
       setStatus("generating");
-      const t0 = performance.now()
+      const t0 = performance.now();
+  
       if (!noir || !backend) {
         console.warn("ZK circuit not ready yet");
         return;
       }
-   
+  
       const { witness } = await noir.execute(inputs);
       const result = await backend.generateProof(witness, { keccak: true });
-      const t1 = performance.now()
-      console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms")
+  
+      const t1 = performance.now();
+      console.log("ZK Proof generated in", (t1 - t0).toFixed(2), "ms");
+  
       setProof(result);
       setStatus("finish");
-
-      console.log("parent", parent)
-      console.log("result", parent.window.opener);
-
-      console.log("=== Dispatching Success Event ===");
+      
+      console.log("Dispatching Success Event");
       const successData = {
         proof: result.proof,
         publicInputs: result.publicInputs,
@@ -170,7 +190,6 @@ export default function AttestationProof() {
     }
   };
 
-
   const parseUserChallenge = async () => {
     if (!walletClient) throw new Error('No wallet client');
 
@@ -205,7 +224,6 @@ export default function AttestationProof() {
         ...digestBytes
       ])
     );
-    const signedUserHash = Array.from(getBytes(prefixedMessage));
 
     const pubKeyHex = SigningKey.recoverPublicKey(prefixedMessage, sig);
     const pubKeyBytes = getBytes(pubKeyHex);
