@@ -29,29 +29,22 @@ export function openZkKycPopup(config: ProofConfig = {}): Promise<{
     console.log("url", url);
     const popup = window.open(
       url + "?origin=" + encodeURIComponent(window.location.origin), 
-      "_blank", 
+      "popup", 
       `width=${popupWidth},height=${popupHeight}`
     )
 
-    console.log("popup", popup);
     if (!popup) {
       reject(new Error("Popup was blocked"))
     }
 
-    console.log("popup opened");
-
     function handler(event: MessageEvent) {
-      // For development, allow any localhost origin
       const isAllowedOrigin = ALLOWED_ORIGINS.includes(event.origin)
 
       if (!isAllowedOrigin) {
-        console.log("Origin not allowed:", event.origin);
         return;
       }
       
       const { proof, publicInputs, meta, type, status, error } = event.data || {};
-
-      console.log("event.data", event.data);
       
       console.log("type:", type);
       if (type !== "zk-coinbase-proof") {
@@ -59,8 +52,6 @@ export function openZkKycPopup(config: ProofConfig = {}): Promise<{
         return;
       }
       
-      console.log("zk-coinbase-proof event received successfully!");
-
       window.removeEventListener("message", handler);
       resolve({ proof, publicInputs, status: 'success', meta });
     }

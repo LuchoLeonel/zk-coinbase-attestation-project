@@ -21,19 +21,9 @@ export default defineConfig({
   preview: {
     host: '0.0.0.0',
     port: 3001,
-    allowedHosts: ['coinbase-attestation.zk-access.xyz'],
-    headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-    },
   },
   server: {
     host: '0.0.0.0',
     port: 3001,
-    allowedHosts: ['coinbase-attestation.zk-access.xyz'],
-    headers: {
-      'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin',
-    },
   },
 })
