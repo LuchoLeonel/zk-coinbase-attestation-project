@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { openZkKycPopup, validateProof } from 'zk-access-coinbase';
+import { openZkKycPopup, validateProof, hexToBytes } from 'zk-access-coinbase';
 
 export const SdkDemo = () => {
   const [proof, setProof] = useState<any>(null);
@@ -20,10 +20,16 @@ export const SdkDemo = () => {
       setPublicInputs(result.publicInputs);
       
       console.log('Received proof:', result);
+      const proof_bytes = hexToBytes(result.proof);
 
-      const validation_result = await validateProof(result);
-      setValidationResult(validation_result);
+      console.log("proof_bytes", proof_bytes);
+      const validation_result = await validateProof({
+        proof: proof_bytes,
+        publicInputs: result.publicInputs,
+      });
       
+      setValidationResult(validation_result);
+
       console.log("validation_result", validation_result);
     } catch (error) {
       console.error('Error getting proof:', error);

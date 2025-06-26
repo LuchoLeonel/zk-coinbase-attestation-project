@@ -15,8 +15,10 @@ import { useAccount } from 'wagmi'
 import * as circomlib from 'circomlibjs';
 import { poseidonHash } from '../../utils/utils';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import { bytesToHex, hexToBytes } from '../../utils/bytesToHex';
 
 const VITE_PUBLIC_BASE_API_KEY = import.meta.env.VITE_PUBLIC_BASE_API_KEY;
+const CIRCUIT_URL = "https://raw.githubusercontent.com/LuchoLeonel/zk-coinbase-attestation-project/refs/heads/sdk/frontend/circuit/target/zk_coinbase_attestation.json"
 
 export default function AttestationProof() {
   const [status, setStatus] = useState<"idle" | "fetching" | "challenge" | "generating" | "finish">("idle")
@@ -34,7 +36,8 @@ export default function AttestationProof() {
         initNoirC(fetch(noirc)),
       ]);
 
-      const compiledProgram = (await import('../../../public/zk_coinbase_attestation.json')).default as CompiledCircuit;
+      const metaRes = await fetch(CIRCUIT_URL);
+      const compiledProgram = await metaRes.json();
       const noirInstance = new Noir(compiledProgram);
       const backendInstance = new UltraHonkBackend(compiledProgram.bytecode, { threads: 4 });
 
@@ -154,8 +157,10 @@ export default function AttestationProof() {
       setStatus("finish");
       
       console.log("Dispatching Success Event");
+
+      const proof_hex = bytesToHex(result.proof);
       const successData = {
-        proof: result.proof,
+        proof: proof_hex,
         publicInputs: result.publicInputs,
         meta: {
           nonce: nonceBigInt.toString(),
@@ -168,7 +173,9 @@ export default function AttestationProof() {
 
       window.opener?.postMessage(successData, "*");
 
-      validateProof(result);
+      const proof_bytes = hexToBytes(proof_hex);
+
+      validateProof({proof: proof_bytes, publicInputs: result.publicInputs});
       console.log("Success event dispatched");
   
     } catch (err) {
