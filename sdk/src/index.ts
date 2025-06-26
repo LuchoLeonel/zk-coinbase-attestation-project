@@ -1,4 +1,7 @@
 import { ALLOWED_ORIGINS } from "./constants";
+import { ProofData, UltraHonkBackend } from "@aztec/bb.js";
+import compiledProgram from '../../frontend/circuit/target/zk_coinbase_attestation.json'
+
 interface ProofConfig {
   url?: string;
   timeout?: number;
@@ -38,9 +41,7 @@ export function openZkKycPopup(config: ProofConfig = {}): Promise<{
     }
 
     function handler(event: MessageEvent) {
-      const isAllowedOrigin = ALLOWED_ORIGINS.includes(event.origin)
-
-      if (!isAllowedOrigin) {
+      if (!ALLOWED_ORIGINS.includes(event.origin)) {
         return;
       }
       
@@ -63,4 +64,11 @@ export function openZkKycPopup(config: ProofConfig = {}): Promise<{
       reject(new Error("Popup timed out"))
     }, timeout)
   })
+}
+
+
+export const validateProof = async (proof: ProofData) => {
+  const backend = new UltraHonkBackend(compiledProgram.bytecode, { threads: 4 })
+  const result = await backend.verifyProof(proof, {keccak: true})
+  return result
 }

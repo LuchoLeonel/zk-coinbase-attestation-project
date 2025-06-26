@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import './App.css'
-import { openZkKycPopup } from 'zk-access-coinbase'
+import { openZkKycPopup, validateProof } from 'zk-access-coinbase'
 
 function App() {
   const [proof, setProof] = useState()
@@ -16,6 +16,10 @@ function App() {
       
       console.log('Received proof:', result);
       // Handle the successful proof here
+
+      const validation_result = await validateProof(result)
+      
+      console.log("validation_result", validation_result)
     } catch (error) {
       console.error('Error getting proof:', error);
       // Handle the error here
