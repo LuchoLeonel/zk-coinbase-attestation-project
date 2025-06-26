@@ -1,0 +1,73 @@
+/* Additional app-specific styles */
+.navbar {
+  min-height: 3rem;
+}
+
+@media (min-width: 640px) {
+  .navbar {
+    min-height: 4rem;
+  }
+}
+
+/* Custom scrollbar for code blocks */
+pre::-webkit-scrollbar {
+  height: 6px;
+}
+
+pre::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+pre::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+pre::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Smooth transitions */
+.transition-all {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Glass morphism effect */
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 640px) {
+  /* Ensure text doesn't overflow on small screens */
+  pre {
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+  
+  /* Better touch targets on mobile */
+  button {
+    min-height: 44px;
+  }
+  
+  /* Reduce padding on mobile for better space usage */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}
+
+/* Ensure proper viewport handling */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
+/* Improve text readability on mobile */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+  }
+}

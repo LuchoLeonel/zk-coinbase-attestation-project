@@ -1,40 +1,20 @@
-import { useState } from 'react';
-import './App.css'
-import { openZkKycPopup, validateProof } from 'zk-access-coinbase'
+import { Header } from './components/Header';
+import { Footer } from './components/Footer';
+import { SdkDemo } from './components/SdkDemo';
+import './App.css';
 
 function App() {
-  const [proof, setProof] = useState()
-  const [publicInputs, setPublicInputs] = useState<string[]>()
-
-
-  const handleOpenPopup = async () => {
-    try {
-      console.log('Opening ZK KYC popup...');
-      const result = await openZkKycPopup();
-      setProof(result.proof)
-      setPublicInputs(result.publicInputs)
-      
-      console.log('Received proof:', result);
-      // Handle the successful proof here
-
-      const validation_result = await validateProof(result)
-      
-      console.log("validation_result", validation_result)
-    } catch (error) {
-      console.error('Error getting proof:', error);
-      // Handle the error here
-    }
-  };
-  
   return (
-    <>
-      <button onClick={handleOpenPopup}>Open ZK KYC Popup</button>
-
-      {/* Displlay proof and public inputs */}
-      {proof ? proof : "No proof"}
-      {publicInputs ? publicInputs : "No publicInputs"}
-    </>
-  )
+    <div className="min-h-screen flex flex-col">
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 flex w-full">
+          <SdkDemo />
+        </main>
+        <Footer />
+      </div>
+    </div>
+  );
 }
 
-export default App
+export default App;

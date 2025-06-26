@@ -168,6 +168,7 @@ export default function AttestationProof() {
 
       window.opener?.postMessage(successData, "*");
 
+      validateProof(result);
       console.log("Success event dispatched");
   
     } catch (err) {
@@ -259,6 +260,14 @@ export default function AttestationProof() {
       txPubKeyY: Array.from(pubKeyBytes.slice(33, 65)),
       txHashBytes: Array.from(getBytes(digest))
     };
+  };
+
+  const validateProof = async (proof: ProofData) => {
+    console.log("Validating proof...");
+    console.log({proof, backend});
+    if (!backend) return;
+    const result = await backend.verifyProof(proof, { keccak: true });
+    console.log("Proof validation result:", result);
   };
 
   return (
