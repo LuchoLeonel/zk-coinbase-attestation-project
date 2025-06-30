@@ -20,7 +20,9 @@ export const SdkDemo = () => {
       setPublicInputs(result.publicInputs);
       
       console.log('Received proof:', result);
-      const proof_bytes = hexToBytes(result.proof);
+
+
+      const proof_bytes = Uint8Array.from(Buffer.from(result.proof, "base64"));
 
       console.log("proof_bytes", proof_bytes);
       const validation_result = await validateProof({
