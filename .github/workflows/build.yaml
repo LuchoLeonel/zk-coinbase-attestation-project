@@ -1,6 +1,7 @@
 name: Build & Deploy
 env:
   IMAGE_TAG_FRONTEND: ghcr.io/lucholeonel/zk-coinbase-attestation-project/frontend
+  IMAGE_TAG_SDK: ghcr.io/lucholeonel/zk-coinbase-attestation-project/sdk
 
   IMAGE_VERSION: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
   NEXT_PUBLIC_ENVIRONMENT: ${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
@@ -82,6 +83,6 @@ jobs:
           context: ./sdk-demo/
           file: ./sdk-demo/Dockerfile
           push: true
-          tags: ${{env.IMAGE_TAG_FRONTEND}}:${{env.IMAGE_VERSION}}
+          tags: ${{env.IMAGE_TAG_SDK}}:${{env.IMAGE_VERSION}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
