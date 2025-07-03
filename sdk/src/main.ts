@@ -3,7 +3,6 @@ import { ProofData, UltraHonkBackend } from "@aztec/bb.js";
 import { CIRCUIT_URL } from "./constants";
 
 interface ProofConfig {
-    url?: string;
     timeout?: number;
     popupWidth?: number;
     popupHeight?: number;
@@ -20,14 +19,12 @@ interface ProofConfig {
   }> {
     console.log("Opening popup")
     const {
-      url = 'http://localhost:3001',
       timeout = 60 * 1000 * 10, // 10 minutes
       popupWidth = 500,
       popupHeight = 600
     } = config;
-  
-    console.log("config", config);
-  
+    const url = "https://coinbase-attestation.zk-access.xyz"
+
     return new Promise((resolve, reject) => {
       console.log("url", url);
       const popup = window.open(
@@ -41,6 +38,7 @@ interface ProofConfig {
       }
   
       function handler(event: MessageEvent) {
+        console.log("origin", event.origin);
         if (!ALLOWED_ORIGINS.includes(event.origin)) {
           return;
         }

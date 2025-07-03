@@ -1,6 +1,4 @@
 export const ALLOWED_ORIGINS = [
-  "http://localhost:3001",
-  "http://localhost:3000",
   "https://coinbase-attestation.zk-access.xyz"
 ];
 
