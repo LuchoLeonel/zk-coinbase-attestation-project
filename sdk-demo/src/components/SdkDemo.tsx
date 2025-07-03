@@ -1,5 +1,9 @@
 import { useState } from 'react';
+<<<<<<< HEAD
 import { openZkKycPopup, validateProof } from 'zk-access-coinbase';
+=======
+import { openZkKycPopup, hexToBytes, validateProof } from 'zk-access-coinbase';
+>>>>>>> sdk
 
 export const SdkDemo = () => {
   const [proof, setProof] = useState<any>(null);
