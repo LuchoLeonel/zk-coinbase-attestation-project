@@ -24,11 +24,15 @@ export default defineConfig({
     allowedHosts: ['coinbase-attestation.zk-access.xyz'],
     headers: {
       'Cross-Origin-Embedder-Policy': 'require-corp',
-      'Cross-Origin-Opener-Policy': 'same-origin',  
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',  
     },
   },
   server: {
     host: '0.0.0.0',
     port: 3001,
+    headers: {
+      'Cross-Origin-Embedder-Policy': 'require-corp',
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',  
+    },
   },
 })

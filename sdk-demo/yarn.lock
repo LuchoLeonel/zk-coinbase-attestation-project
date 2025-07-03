@@ -600,7 +600,7 @@
 
 "@tailwindcss/oxide-linux-x64-musl@4.1.11":
   version "4.1.11"
-  resolved "https://registry.yarnpkg.com/@tailwindcss/oxide-linux-x64-musl/-/oxide-linux-x64-musl-4.1.11.tgz#7d6e8adcfb9bc84d8e2e2e8781d661edb9e41ba8"
+  resolved "https://registry.npmjs.org/@tailwindcss/oxide-linux-x64-musl/-/oxide-linux-x64-musl-4.1.11.tgz"
   integrity sha512-e3C/RRhGunWYNC3aSF7exsQkdXzQ/M+aYuZHKnw4U7KQwTJotnWsGOIVih0s2qQzmEzOFIJ3+xt7iq67K/p56Q==
 
 "@tailwindcss/oxide-wasm32-wasi@4.1.11":
@@ -1316,7 +1316,7 @@ lightningcss-linux-x64-gnu@1.30.1:
 
 lightningcss-linux-x64-musl@1.30.1:
   version "1.30.1"
-  resolved "https://registry.yarnpkg.com/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.30.1.tgz#66dca2b159fd819ea832c44895d07e5b31d75f26"
+  resolved "https://registry.npmjs.org/lightningcss-linux-x64-musl/-/lightningcss-linux-x64-musl-1.30.1.tgz"
   integrity sha512-rRomAK7eIkL+tHY0YPxbc5Dra2gXlI63HL+v1Pdi1a3sC+tJTcFrHX+E86sulgAXeI7rSzDYhPSeHHjqFhqfeQ==
 
 lightningcss-win32-arm64-msvc@1.30.1:
@@ -1720,10 +1720,10 @@ yocto-queue@^0.1.0:
   resolved "https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
 
-zk-access-coinbase@^0.1.10:
-  version "0.1.10"
-  resolved "https://registry.yarnpkg.com/zk-access-coinbase/-/zk-access-coinbase-0.1.10.tgz#7b9ab3384488a390b96c7e0d26f4e70cbb285c7c"
-  integrity sha512-3ag8kJhQwhTbkAyP8DE27Ljfu6lvhZfPaCKbY7EVm8y+4cT5PwU0XPMLgNTCpTKl0pmXe/jZDI7c99/y/r9wuw==
+zk-access-coinbase@^0.1.12:
+  version "0.1.12"
+  resolved "https://registry.yarnpkg.com/zk-access-coinbase/-/zk-access-coinbase-0.1.12.tgz#e28b6b4f3573a7be525ff7421f86e3ca95437a96"
+  integrity sha512-c/67HQh8NXBbujGtNub2FcFBTDAVufNI0D7Pkfb5YqYNjUlnDnqiko4XfqNYKX2WuUG+Rnr80EPWsILxQhyV5Q==
   dependencies:
     "@aztec/bb.js" "0.72.1"
     "@noir-lang/noir_js" "1.0.0-beta.2"

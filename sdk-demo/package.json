@@ -10,12 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aztec/bb.js": "0.72.1",
     "@tailwindcss/vite": "^4.1.11",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "tailwindcss": "^4.1.11",
-    "@aztec/bb.js": "0.72.1",
-    "zk-access-coinbase": "^0.1.10"
+    "zk-access-coinbase": "^0.1.12"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
