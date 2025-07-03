@@ -159,8 +159,10 @@ export default function AttestationProof() {
       console.log("Dispatching Success Event");
 
       const proof_hex = bytesToHex(result.proof);
+      const proofBase64 = Buffer.from(result.proof).toString("base64");
+
       const successData = {
-        proof: proof_hex,
+        proof: proofBase64,
         publicInputs: result.publicInputs,
         meta: {
           nonce: nonceBigInt.toString(),
