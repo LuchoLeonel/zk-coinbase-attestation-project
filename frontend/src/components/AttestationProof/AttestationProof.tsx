@@ -284,9 +284,6 @@ export default function AttestationProof() {
         <p className="text-gray-600 text-base">
           This process fetches the Base transaction used in your Coinbase attestation and generates a zk proof asserting both your verification status and wallet ownership.
         </p>
-        <p className="text-gray-600 text-base">
-          {window.opener ? "true" : "false"}
-        </p>
         <div className="flex justify-center items-center">
           {isConnected ? (
           <button
